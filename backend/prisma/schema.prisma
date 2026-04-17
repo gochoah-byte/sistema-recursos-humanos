@@ -1,0 +1,124 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ajustes_nomina {
+  id                      Int             @id @default(autoincrement())
+  detalle_nomina_id       Int
+  ajustado_por_usuario_id Int?
+  monto_anterior          Decimal?        @db.Decimal(10, 2)
+  monto_nuevo             Decimal?        @db.Decimal(10, 2)
+  razon                   String?
+  cambiado_en             DateTime        @default(now()) @db.Timestamp(6)
+  detalles_nomina         detalles_nomina @relation(fields: [detalle_nomina_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ajuste_detalle")
+  usuarios                usuarios?       @relation(fields: [ajustado_por_usuario_id], references: [id], onUpdate: NoAction, map: "fk_ajuste_usuario")
+}
+
+model auditoria_logs {
+  id          Int       @id @default(autoincrement())
+  usuario_id  Int?
+  accion      String    @db.VarChar(50)
+  entidad     String    @db.VarChar(100)
+  entidad_id  Int?
+  descripcion String?
+  creado_en   DateTime  @default(now()) @db.Timestamp(6)
+  usuarios    usuarios? @relation(fields: [usuario_id], references: [id], onUpdate: NoAction, map: "fk_log_usuario")
+}
+
+model detalles_nomina {
+  id                    Int              @id @default(autoincrement())
+  periodo_nomina_id     Int
+  empleado_id           Int
+  salario_base_snapshot Decimal?         @db.Decimal(10, 2)
+  horas_extra           Int?
+  monto_horas_extra     Decimal?         @db.Decimal(10, 2)
+  bonificaciones        Decimal?         @db.Decimal(10, 2)
+  deducciones_total     Decimal?         @db.Decimal(10, 2)
+  salario_neto          Decimal          @db.Decimal(10, 2)
+  creado_en             DateTime         @default(now()) @db.Timestamp(6)
+  ajustes_nomina        ajustes_nomina[]
+  empleados             empleados        @relation(fields: [empleado_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_detalle_empleado")
+  periodos_nomina       periodos_nomina  @relation(fields: [periodo_nomina_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_detalle_periodo")
+
+  @@unique([periodo_nomina_id, empleado_id], map: "unique_nomina_empleado")
+}
+
+model documentos {
+  id                    Int             @id @default(autoincrement())
+  empleado_id           Int
+  tipo_documento_id     Int
+  nombre_archivo        String          @db.VarChar(255)
+  url_archivo           String          @db.VarChar(255)
+  subido_en             DateTime        @default(now()) @db.Timestamp(6)
+  subido_por_usuario_id Int?
+  empleados             empleados       @relation(fields: [empleado_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_documento_empleado")
+  tipos_documento       tipos_documento @relation(fields: [tipo_documento_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_documento_tipo")
+  usuarios              usuarios?       @relation(fields: [subido_por_usuario_id], references: [id], onUpdate: NoAction, map: "fk_documento_usuario")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model empleados {
+  id                   Int                    @id @default(autoincrement())
+  dpi                  String                 @unique @db.VarChar(20)
+  nombres              String                 @db.VarChar(100)
+  apellidos            String                 @db.VarChar(100)
+  fecha_nacimiento     DateTime?              @db.Date
+  direccion            String?
+  telefono             String?                @db.VarChar(20)
+  salario_base         Decimal                @db.Decimal(10, 2)
+  puesto               String?                @db.VarChar(100)
+  departamento         String?                @db.VarChar(100)
+  estado               String                 @db.VarChar(20)
+  creado_en            DateTime               @default(now()) @db.Timestamp(6)
+  detalles_nomina      detalles_nomina[]
+  documentos           documentos[]
+  registros_academicos registros_academicos[]
+  usuarios             usuarios?
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model periodos_nomina {
+  id              Int               @id @default(autoincrement())
+  fecha_inicio    DateTime          @db.Date
+  fecha_fin       DateTime          @db.Date
+  estado          String            @db.VarChar(20)
+  creado_en       DateTime          @default(now()) @db.Timestamp(6)
+  detalles_nomina detalles_nomina[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model registros_academicos {
+  id               Int       @id @default(autoincrement())
+  empleado_id      Int
+  tipo             String    @db.VarChar(20)
+  titulo           String    @db.VarChar(150)
+  institucion      String    @db.VarChar(150)
+  fecha_graduacion DateTime? @db.Date
+  empleados        empleados @relation(fields: [empleado_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_academico_empleado")
+}
+
+model tipos_documento {
+  id             Int          @id @default(autoincrement())
+  nombre         String       @db.VarChar(100)
+  es_obligatorio Boolean
+  documentos     documentos[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model usuarios {
+  id             Int              @id @default(autoincrement())
+  correo         String           @unique @db.VarChar(150)
+  contrasena     String           @db.VarChar(255)
+  rol            String           @db.VarChar(20)
+  empleado_id    Int?             @unique
+  creado_en      DateTime         @default(now()) @db.Timestamp(6)
+  ajustes_nomina ajustes_nomina[]
+  auditoria_logs auditoria_logs[]
+  documentos     documentos[]
+  empleados      empleados?       @relation(fields: [empleado_id], references: [id], onUpdate: NoAction, map: "fk_usuario_empleado")
+}
