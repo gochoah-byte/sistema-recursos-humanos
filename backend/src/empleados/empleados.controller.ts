@@ -15,4 +15,10 @@ export class EmpleadosController {
     return this.empleadosService.create(createEmpleadoDto);
   }
 
+  @Get()
+  @ApiOperation({ summary: 'Listar todos los empleados (US02)' })
+  findAll() {
+    return this.empleadosService.findAll();
+  }
+
 }

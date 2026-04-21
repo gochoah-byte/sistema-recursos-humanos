@@ -27,5 +27,18 @@ export class EmpleadosService {
       data: nuevoEmpleado,
     };
   }
+
+  async findAll() {
+    const lista = await this.prisma.empleados.findMany();
+
+    if (lista.length === 0) {
+      return {
+        message: 'No se encontraron empleados registrados en el sistema',
+        data: []
+      };
+    }
+
+    return lista;
+  }
   
 }
