@@ -11,7 +11,7 @@ export class UsuariosService {
       const nuevoUsuario = await this.prisma.usuarios.create({
         data: {
           correo: createUsuarioDto.correo,
-          contrasena: createUsuarioDto.contrasena, // TODO: Encriptar después
+          contrasena: createUsuarioDto.contrasena, 
           rol: createUsuarioDto.rol.toUpperCase(),
           empleado_id: createUsuarioDto.empleado_id,
         },
@@ -50,11 +50,11 @@ export class UsuariosService {
     const user = await this.prisma.usuarios.findFirst({
       where: {
         correo: correo,
-        contrasena: contrasena, // Comparación directa para tu demo
+        contrasena: contrasena, 
       },
       include: {
         empleados: {
-          select: { nombres: true, apellidos: true } // Traemos el nombre real
+          select: { nombres: true, apellidos: true } 
         }
       }
     });
