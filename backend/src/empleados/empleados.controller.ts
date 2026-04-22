@@ -10,9 +10,15 @@ export class EmpleadosController {
   constructor(private readonly empleadosService: EmpleadosService) { }
 
   @Post()
-  @ApiOperation({ summary: 'Registrar un nuevo empleado (US01)' })
+  @ApiOperation({ summary: 'Registrar un nuevo empleado' })
   create(@Body() createEmpleadoDto: CreateEmpleadoDto) {
     return this.empleadosService.create(createEmpleadoDto);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Listar todos los empleados' })
+  findAll() {
+    return this.empleadosService.findAll();
   }
 
 }
