@@ -41,4 +41,35 @@ export class EmpleadosService {
     return lista;
   }
   
+  async findOne(id: number) {
+  const empleado = await this.prisma.empleados.findUnique({
+    where: { id },
+  });
+
+  if (!empleado) {
+    return {
+      message: 'Empleado no encontrado',
+    };
+  }
+
+  return empleado;
+}
+
+async update(id: number, data: any) {
+  return this.prisma.empleados.update({
+    where: { id },
+    data: {
+      ...data,
+      fecha_nacimiento: data.fecha_nacimiento
+        ? new Date(data.fecha_nacimiento)
+        : undefined,
+    },
+  });
+}
+
+async remove(id: number) {
+  return this.prisma.empleados.delete({
+    where: { id },
+  });
+}
 }
