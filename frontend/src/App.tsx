@@ -15,25 +15,27 @@ const Login = ({ setRole }: { setRole: (role: string) => void }) => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
+    
     try {
       const response = await axios.post('http://localhost:3000/usuarios/login', {
         correo,
-        contrasena
+        contrasena 
       });
 
-      if (response.data && response.data.rol) {
-        const userRole = response.data.rol;
+      if (response.data && response.data.access_token) {
+        const { access_token, usuario } = response.data;
 
-        localStorage.setItem('rol', userRole);
-        setRole(userRole);
+        localStorage.setItem('token', access_token);
+        localStorage.setItem('rol', usuario.rol);
 
-        if (userRole === 'ADMIN') navigate('/admin');
-        else if (userRole === 'RRHH') navigate('/rrhh');
+        setRole(usuario.rol);
+
+        if (usuario.rol === 'ADMIN') navigate('/admin');
+        else if (usuario.rol === 'RRHH') navigate('/rrhh');
         else navigate('/empleado');
       }
     } catch (err: any) {
-      setError('Credenciales incorrectas o servidor apagado');
+      setError('Correo o contraseña incorrectos');
       console.error(err);
     }
   };
