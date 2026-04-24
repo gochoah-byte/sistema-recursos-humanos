@@ -7,9 +7,12 @@ import { RegistrosAcademicosModule } from './registros_academicos/registros_acad
 import { DocumentosModule } from './documentos/documentos.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
 import { AjustesNominaModule } from './ajustes_nomina/ajustes_nomina.module';
+import { TiposDocumentoModule } from './tipos_documento/tipos_documento.module';
+import { PeriodosNominaModule } from './periodos_nomina/periodos_nomina.module';
+import { DetallesNominaModule } from './detalles_nomina/detalles_nomina.module';
 
 @Module({
-  imports: [EmpleadosModule, UsuariosModule, RegistrosAcademicosModule, DocumentosModule, AuditoriaModule, AjustesNominaModule],
+  imports: [EmpleadosModule, UsuariosModule, RegistrosAcademicosModule, DocumentosModule, AuditoriaModule, AjustesNominaModule, TiposDocumentoModule, PeriodosNominaModule, DetallesNominaModule],
   controllers: [AppController],
   providers: [AppService],
 })

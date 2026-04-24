@@ -1,7 +1,18 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export class CreateRegistrosAcademicoDto {
+  @ApiProperty({ example: 6 })
   empleado_id!: number;
-  tipo!: 'TITULO' | 'CERTIFICACION';
-  titulo!: string;
+
+  @ApiProperty({ example: 'Grado Académico' })
+  tipo!: string; 
+
+  @ApiProperty({ example: 'Ingeniería' })
+  titulo!: string; 
+
+  @ApiProperty({ example: 'USAC' })
   institucion!: string;
+
+  @ApiProperty({ example: '2026-01-01T00:00:00.000Z' })
   fecha_graduacion!: string;
 }

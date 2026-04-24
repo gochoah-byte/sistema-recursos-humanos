@@ -1,26 +1,101 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma.service';
+import * as fs from 'fs';
+import * as path from 'path';
 import { CreateDocumentoDto } from './dto/create-documento.dto';
-import { UpdateDocumentoDto } from './dto/update-documento.dto';
+import { AuditoriaService } from '../auditoria/auditoria.service';
 
 @Injectable()
 export class DocumentosService {
-  create(createDocumentoDto: CreateDocumentoDto) {
-    return 'This action adds a new documento';
+  constructor(private prisma: PrismaService, private auditoriaService: AuditoriaService) { }
+
+  async saveMetadata(data: {
+    nombre_archivo: string;
+    url_archivo: string;
+    empleado_id: number;
+    tipo_documento_id: number;
+    subido_por_usuario_id: number;
+  }) {
+
+    return this.prisma.documentos.create({
+      data: {
+        nombre_archivo: data.nombre_archivo,
+        url_archivo: data.url_archivo,
+        empleado_id: data.empleado_id,
+        tipo_documento_id: data.tipo_documento_id,
+        subido_por_usuario_id: data.subido_por_usuario_id,
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all documentos`;
+  async findByEmpleado(empleadoId: number) {
+    const docs = await this.prisma.documentos.findMany({
+      where: { empleado_id: empleadoId },
+      include: {
+        tipos_documento: true, 
+        usuarios: {
+          select: { correo: true }
+        }
+      }
+    });
+
+    if (!docs || docs.length === 0) {
+      throw new NotFoundException(`No hay documentos para el empleado ${empleadoId}`);
+    }
+    return docs;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} documento`;
+  async remove(id: number) {
+    const documento = await this.prisma.documentos.findUnique({ where: { id } });
+
+    if (!documento) {
+      throw new NotFoundException(`El documento con ID ${id} no existe`);
+    }
+
+    const filePath = path.join(process.cwd(), 'uploads', documento.url_archivo);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    return this.prisma.documentos.delete({
+      where: { id },
+    });
   }
 
-  update(id: number, updateDocumentoDto: UpdateDocumentoDto) {
-    return `This action updates a #${id} documento`;
+  async validarExpediente(empleadoId: number) {
+    const tiposObligatorios = await this.prisma.tipos_documento.findMany({
+      where: { es_obligatorio: true }
+    });
+
+    const documentosSubidos = await this.prisma.documentos.findMany({
+      where: { empleado_id: empleadoId }
+    });
+
+    const idsSubidos = documentosSubidos.map(d => d.tipo_documento_id);
+    const faltantes = tiposObligatorios.filter(t => !idsSubidos.includes(t.id));
+
+    return {
+      empleado_id: empleadoId,
+      estado: faltantes.length === 0 ? 'Completo' : 'Incompleto',
+      faltantes: faltantes.map(f => f.nombre),
+      total_obligatorios: tiposObligatorios.length,
+      subidos: documentosSubidos.length
+    };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} documento`;
+  async create(dto: CreateDocumentoDto) {
+    const nuevoDoc = await this.prisma.documentos.create({
+      data: { ...dto, subido_en: new Date() }
+    });
+
+    await this.auditoriaService.create({
+      usuario_id: dto.subido_por_usuario_id,
+      accion: 'SUBIR_DOCUMENTO',
+      entidad: 'documentos',
+      entidad_id: nuevoDoc.id,
+      descripcion: `Se cargó el documento ${dto.nombre_archivo} para el empleado ID ${dto.empleado_id}`
+    });
+
+    return nuevoDoc;
   }
 }
