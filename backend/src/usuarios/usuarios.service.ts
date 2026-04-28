@@ -1,8 +1,10 @@
-import { Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, NotFoundException} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { JwtService } from '@nestjs/jwt'; 
 import * as bcrypt from 'bcrypt'; 
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsuariosService {
@@ -92,25 +94,55 @@ export class UsuariosService {
   }
 
   async findOne(id: number) {
-    return this.prisma.usuarios.findUnique({
+    const usuario = await this.prisma.usuarios.findUnique({
       where: { id },
-      include: { empleados: true }
+      include: {
+        empleados: {
+          select: { nombres: true, apellidos: true }
+        }
+      }
     });
-  }
 
-  async update(id: number, updateUsuarioDto: any) {
-    if (updateUsuarioDto.contrasena) {
-      const salt = await bcrypt.genSalt(10);
-      updateUsuarioDto.contrasena = await bcrypt.hash(updateUsuarioDto.contrasena, salt);
+    if (!usuario) {
+      throw new NotFoundException(`El usuario con ID ${id} no existe en la base de datos`);
     }
 
-    return this.prisma.usuarios.update({
-      where: { id },
-      data: updateUsuarioDto,
-    });
+    return usuario;
+  }
+
+  async update(id: number, updateUsuarioDto: UpdateUsuarioDto) {  
+    const usuarioExistente = await this.prisma.usuarios.findUnique({ where: { id } });
+    if (!usuarioExistente) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+
+    if (updateUsuarioDto.contrasena) {
+      updateUsuarioDto.contrasena = await bcrypt.hash(updateUsuarioDto.contrasena, 10);
+    }
+
+    try {
+      return await this.prisma.usuarios.update({
+        where: { id },
+        data: updateUsuarioDto,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('Este empleado ya tiene un usuario asignado.');
+        }
+      }
+      throw error;
+    }
   }
 
   async remove(id: number) {
+    const usuario = await this.prisma.usuarios.findUnique({
+      where: { id },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException(`No se puede eliminar: El usuario con ID ${id} no existe.`);
+    }
     return this.prisma.usuarios.delete({
       where: { id },
     });

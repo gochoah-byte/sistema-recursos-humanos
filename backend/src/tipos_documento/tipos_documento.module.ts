@@ -7,4 +7,4 @@ import { PrismaService } from '../prisma.service';
   controllers: [TiposDocumentoController],
   providers: [TiposDocumentoService, PrismaService],
 })
-export class TiposDocumentoModule {}
+export class TiposDocumentoModule { }

@@ -1,26 +1,34 @@
 import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma.service';
 import { CreateAuditoriaDto } from './dto/create-auditoria.dto';
-import { UpdateAuditoriaDto } from './dto/update-auditoria.dto';
 
 @Injectable()
 export class AuditoriaService {
-  create(createAuditoriaDto: CreateAuditoriaDto) {
-    return 'This action adds a new auditoria';
+  constructor(private prisma: PrismaService) { }
+
+  async create(dto: CreateAuditoriaDto) {
+    return await this.prisma.auditoria_logs.create({
+      data: {
+        usuario_id: dto.usuario_id,
+        accion: dto.accion,
+        entidad: dto.entidad,
+        entidad_id: dto.entidad_id,
+        descripcion: dto.descripcion,
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all auditoria`;
+  async findAll() {
+    return await this.prisma.auditoria_logs.findMany({
+      include: { usuarios: true },
+      orderBy: { creado_en: 'desc' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auditoria`;
-  }
-
-  update(id: number, updateAuditoriaDto: UpdateAuditoriaDto) {
-    return `This action updates a #${id} auditoria`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auditoria`;
+  async findOne(id: number) {
+    return await this.prisma.auditoria_logs.findUnique({
+      where: { id },
+      include: { usuarios: true }
+    });
   }
 }

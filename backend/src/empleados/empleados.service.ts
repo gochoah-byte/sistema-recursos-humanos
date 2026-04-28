@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateEmpleadoDto } from './dto/create-empleado.dto';
+import { AuditoriaService } from '../auditoria/auditoria.service';
 
 @Injectable()
 export class EmpleadosService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService, private auditoriaService: AuditoriaService) { }
 
   async create(createEmpleadoDto: CreateEmpleadoDto) {
     const nuevoEmpleado = await this.prisma.empleados.create({
@@ -55,21 +56,78 @@ export class EmpleadosService {
   return empleado;
 }
 
-async update(id: number, data: any) {
-  return this.prisma.empleados.update({
-    where: { id },
-    data: {
-      ...data,
-      fecha_nacimiento: data.fecha_nacimiento
-        ? new Date(data.fecha_nacimiento)
-        : undefined,
-    },
-  });
-}
+  async update(id: number, updateEmpleadoDto: any) {
+    const empleado = await this.prisma.empleados.findUnique({ where: { id } });
+    if (!empleado) {
+      throw new NotFoundException(`Empleado con ID ${id} no encontrado`);
+    }
 
-async remove(id: number) {
-  return this.prisma.empleados.delete({
-    where: { id },
-  });
-}
+    if (updateEmpleadoDto.nombres === "" || updateEmpleadoDto.dpi === "") {
+      throw new BadRequestException('El nombre y el DPI son campos obligatorios');
+    }
+
+    if (updateEmpleadoDto.fecha_nacimiento) {
+      updateEmpleadoDto.fecha_nacimiento = new Date(updateEmpleadoDto.fecha_nacimiento);
+    }
+
+    return this.prisma.empleados.update({
+      where: { id },
+      data: updateEmpleadoDto,
+    });
+  }
+
+  async remove(id: number) {
+    const empleado = await this.prisma.empleados.findUnique({
+      where: { id },
+    });
+
+    if (!empleado) {
+      throw new NotFoundException(`No se puede procesar: El empleado con ID ${id} no existe.`);
+    }
+
+    const empleadoInactivo = await this.prisma.empleados.update({
+      where: { id },
+      data: {
+        estado: 'SUSPENDIDO'
+      },
+    });
+
+    await this.auditoriaService.create({
+      usuario_id: 5, // Aquí deberías pasar el ID del usuario que está logueado
+      accion: 'SOFT_DELETE_EMPLEADO',
+      entidad: 'empleados',
+      entidad_id: id,
+      descripcion: `Se cambió el estado del empleado ${empleado.nombres} ${empleado.apellidos} a SUSPENDIDO.`,
+    });
+
+    return {
+      message: 'Empleado suspendido correctamente (Soft Delete)',
+      data: empleadoInactivo
+    };
+  }
+
+  async findIncompletos() {
+
+    const incompletos = await this.prisma.empleados.findMany({
+      where: {
+        documentos: {
+          none: {} 
+        }
+      },
+      select: {
+        id: true,
+        nombres: true,
+        apellidos: true,
+        dpi: true,
+        estado: true
+      }
+    });
+
+    return {
+      total: incompletos.length,
+      descripcion: "Empleados que no han entregado ningún documento para su expediente digital",
+      empleados: incompletos
+    };
+  }
+
 }
