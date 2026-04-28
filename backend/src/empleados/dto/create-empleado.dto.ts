@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDateString, Matches } from 'class-validator';
 
 export class CreateEmpleadoDto {
     @ApiProperty({ example: '1234567890101' })
     @IsNotEmpty()
     @IsString()
+    @Matches(/^[0-9]{13}$/, { message: 'El DPI debe tener exactamente 13 dígitos numéricos' })
     dpi!: string;
 
     @ApiProperty({ example: 'Jose Gerardo' })

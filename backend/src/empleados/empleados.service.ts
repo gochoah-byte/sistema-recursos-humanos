@@ -8,25 +8,31 @@ export class EmpleadosService {
   constructor(private prisma: PrismaService, private auditoriaService: AuditoriaService) { }
 
   async create(createEmpleadoDto: CreateEmpleadoDto) {
-    const nuevoEmpleado = await this.prisma.empleados.create({
-      data: {
-        dpi: createEmpleadoDto.dpi,
-        nombres: createEmpleadoDto.nombres,
-        apellidos: createEmpleadoDto.apellidos,
-        fecha_nacimiento: createEmpleadoDto.fecha_nacimiento ? new Date(createEmpleadoDto.fecha_nacimiento) : null,
-        direccion: createEmpleadoDto.direccion,
-        telefono: createEmpleadoDto.telefono,
-        salario_base: createEmpleadoDto.salario_base,
-        puesto: createEmpleadoDto.puesto,
-        departamento: createEmpleadoDto.departamento,
-        estado: createEmpleadoDto.estado,
-      },
-    });
+    try{
+        const nuevoEmpleado = await this.prisma.empleados.create({
+        data: {
+          dpi: createEmpleadoDto.dpi,
+          nombres: createEmpleadoDto.nombres,
+          apellidos: createEmpleadoDto.apellidos,
+          fecha_nacimiento: createEmpleadoDto.fecha_nacimiento ? new Date(createEmpleadoDto.fecha_nacimiento) : null,
+          direccion: createEmpleadoDto.direccion,
+          telefono: createEmpleadoDto.telefono,
+          salario_base: createEmpleadoDto.salario_base,
+          puesto: createEmpleadoDto.puesto,
+          departamento: createEmpleadoDto.departamento,
+          estado: createEmpleadoDto.estado,
+        },
+      });
 
-    return {
-      message: 'Empleado registrado correctamente',
-      data: nuevoEmpleado,
-    };
+      return {
+        message: 'Empleado registrado correctamente',
+        data: nuevoEmpleado,
+      };
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        throw new BadRequestException('El DPI ya está registrado en el sistema');
+      }
+    }
   }
 
   async findAll() {
