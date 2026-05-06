@@ -66,11 +66,9 @@ export class DocumentosController {
   @ApiOperation({ summary: 'Listar todos los documentos de un empleado' })
   @ApiResponse({ status: 200, description: 'Lista de documentos encontrada.' })
   @ApiResponse({ status: 404, description: 'El empleado no tiene documentos o no existe.' })
+  
   async findAllByEmpleado(@Param('id') id: string) {
     const documentos = await this.documentosService.findByEmpleado(+id);
-    if (!documentos || documentos.length === 0) {
-      throw new NotFoundException(`No se encontraron documentos para el empleado con ID ${id}`);
-    }
     return documentos;
   }
 

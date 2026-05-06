@@ -35,16 +35,20 @@ export class EmpleadosService {
     }
   }
 
-  async findAll() {
-    const lista = await this.prisma.empleados.findMany();
-
+  async findAll(estado?: string) {
+    const whereClause = estado && estado !== 'TODOS' ? { estado } : {};
+    const lista = await this.prisma.empleados.findMany({
+      where: whereClause,
+      orderBy: {
+        salario_base: 'desc' 
+      }
+    });
     if (lista.length === 0) {
       return {
-        message: 'No se encontraron empleados registrados en el sistema',
+        message: `No se encontraron empleados registrados ${estado ? 'con estado ' + estado : ''}`,
         data: []
       };
     }
-
     return lista;
   }
   

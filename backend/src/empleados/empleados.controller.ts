@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, HttpCode, HttpStatus, Query } from '@nestjs/common';
 import { EmpleadosService } from './empleados.service';
 import { CreateEmpleadoDto } from './dto/create-empleado.dto';
 import { UpdateEmpleadoDto } from './dto/update-empleado.dto';
@@ -22,11 +22,10 @@ export class EmpleadosController {
   getIncompletos() {
     return this.empleadosService.findIncompletos();
   }
-
   @Get()
   @ApiOperation({ summary: 'Listar todos los empleados' })
-  findAll() {
-    return this.empleadosService.findAll();
+  findAll(@Query('estado') estado?: string) {
+    return this.empleadosService.findAll(estado);
   }
 
   @Get(':id')

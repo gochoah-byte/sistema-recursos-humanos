@@ -6,4 +6,8 @@ export const getDocumentosPorEmpleado = (id: number) =>
   api.get(`/documentos/empleado/${id}`);
 
 export const subirDocumento = (formData: FormData) =>
-  api.post('/documentos', formData);
+  api.post('/documentos/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });

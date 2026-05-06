@@ -25,7 +25,7 @@ interface Documento {
   tipo_documento_id: number;
 }
 
-/* 🔥 SOLUCIÓN AL ERROR */
+
 type DocsPorEmpleado = {
   [key: number]: Documento[];
 };
@@ -70,18 +70,17 @@ export const Documentos: React.FC = () => {
   init();
 }, []);
 
-  /* 🔹 CALCULAR ESTADO */
   const calcularEstado = (empleadoId: number) => {
     const docs = docsPorEmpleado[empleadoId] || [];
     const obligatorios = tipos.filter((t) => t.es_obligatorio);
 
-    if (docs.length === 0) return "incompleto";
+    if (docs.length === 0) return "Incompleto";
 
     const completo = obligatorios.every((t) =>
-      docs.some((d) => d.tipo_documento_id === t.id)
+      docs.some((d) => Number(d.tipo_documento_id) === Number(t.id))
     );
 
-    return completo ? "completo" : "proceso";
+    return completo ? "Completo" : "En Proceso";
   };
 
   const abrirModal = (id: number) => {
@@ -91,6 +90,8 @@ export const Documentos: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const usuarioSesion = JSON.parse(localStorage.getItem("usuario") || "{}");
+    const usuarioId = usuarioSesion.id || "1";
 
     if (!empleadoId || !tipoSeleccionado || !archivo) {
       alert("Completa todos los campos");
@@ -101,20 +102,21 @@ export const Documentos: React.FC = () => {
       const formData = new FormData();
       formData.append("empleado_id", empleadoId.toString());
       formData.append("tipo_documento_id", tipoSeleccionado.toString());
-      formData.append("archivo", archivo);
+      formData.append("file", archivo);
+      formData.append("subido_por_usuario_id", usuarioId.toString());
 
       await subirDocumento(formData);
-
-      alert("Documento subido correctamente");
 
       setModal(false);
       setArchivo(null);
       setTipoSeleccionado("");
 
-      cargarDatos();
+      await cargarDatos();
+
+      alert("¡Documento subido correctamente!");
     } catch (error) {
-      console.error(error);
-      alert("Error al subir documento");
+      console.error("Error al subir:", error);
+      alert("Error al subir documento.");
     }
   };
 
@@ -160,9 +162,9 @@ export const Documentos: React.FC = () => {
                 <td className="p-2">
                   <span
                     className={`font-bold ${
-                      estado === "completo"
+                      estado === "Completo"
                         ? "text-green-500"
-                        : estado === "incompleto"
+                        : estado === "Incompleto"
                         ? "text-red-500"
                         : "text-yellow-500"
                     }`}

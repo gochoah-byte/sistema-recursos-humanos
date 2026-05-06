@@ -5,8 +5,14 @@ export const EmpleadosService = {
     const response = await api.get('/empleados');
     return response.data;
   },
+
   getIncompletos: async () => {
     const response = await api.get('/empleados/reportes/expedientes-incompletos');
+    return response.data;
+  },
+
+  update: async (id: number, data: any) => {
+    const response = await api.put(`/empleados/${id}`, data);
     return response.data;
   }
 };
