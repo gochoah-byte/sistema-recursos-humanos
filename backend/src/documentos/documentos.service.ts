@@ -59,10 +59,7 @@ export class DocumentosService {
       throw new NotFoundException(`El documento con ID ${id} no existe`);
     }
 
-    const filePath = path.join(process.cwd(), 'uploads', documento.url_archivo);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
+   
 
     return this.prisma.documentos.delete({
       where: { id },
@@ -105,4 +102,62 @@ export class DocumentosService {
 
     return nuevoDoc;
   }
+
+async guardarArchivoBase64(
+  archivoBase64: string,
+  nombreArchivo: string
+) {
+
+  // convertir base64 a buffer
+  const buffer = Buffer.from(
+    archivoBase64,
+    'base64'
+  );
+
+  // nombre único
+  const fileName = `${Date.now()}-${nombreArchivo}`;
+
+  // ruta uploads
+  const uploadPath = path.join(
+    process.cwd(),
+    'uploads'
+  );
+
+  // crear carpeta
+  if (!fs.existsSync(uploadPath)) {
+    fs.mkdirSync(uploadPath);
+  }
+
+  // ruta final
+  const filePath = path.join(
+    uploadPath,
+    fileName
+  );
+
+  // guardar físico
+  fs.writeFileSync(filePath, buffer);
+
+  // devolver nombre guardado
+  return fileName;
+}
+
+async obtenerBase64(id: number) {
+
+  const documento =
+    await this.prisma.documentos.findUnique({
+      where: { id }
+    });
+
+  if (!documento) {
+    throw new NotFoundException(
+      'Documento no encontrado'
+    );
+  }
+
+  return {
+    nombre_archivo: documento.nombre_archivo,
+    base64: documento.url_archivo
+  };
+}
+
 }

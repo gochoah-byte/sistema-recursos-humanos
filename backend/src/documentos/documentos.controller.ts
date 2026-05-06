@@ -1,6 +1,6 @@
 import { Controller, Post, UseInterceptors, UploadedFile, Body, Get, Param, Delete, BadRequestException, NotFoundException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { extname } from 'path';
 import { DocumentosService } from './documentos.service';
 import { ApiConsumes, ApiBody, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -28,13 +28,7 @@ export class DocumentosController {
   @ApiResponse({ status: 201, description: 'Documento subido y registrado con éxito.' })
   @ApiResponse({ status: 400, description: 'Error en la carga o datos faltantes.' })
   @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, callback) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        callback(null, `${uniqueSuffix}${extname(file.originalname)}`);
-      },
-    }),
+    storage: memoryStorage(),
   }))
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
@@ -47,7 +41,7 @@ export class DocumentosController {
     // Convertimos a número porque en multipart/form-data llegan como strings
     const metadata = {
       nombre_archivo: file.originalname,
-      url_archivo: file.filename,
+      url_archivo: file.buffer.toString('base64'),
       empleado_id: Number(body.empleado_id),
       tipo_documento_id: Number(body.tipo_documento_id),
       subido_por_usuario_id: Number(body.subido_por_usuario_id)
@@ -79,4 +73,13 @@ export class DocumentosController {
   async remove(@Param('id') id: string) {
     return this.documentosService.remove(+id);
   }
+
+@Get(':id/base64')
+async obtenerDocumento(
+  @Param('id') id: string
+) {
+
+  return this.documentosService.obtenerBase64(+id);
+}
+  
 }
