@@ -10,7 +10,6 @@ export const EmpleadosList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<any>(null);
 
-
   useEffect(() => {
     cargarEmpleados();
   }, []);
@@ -29,6 +28,25 @@ export const EmpleadosList: React.FC = () => {
     }
   };
 
+  // 1. NUEVA FUNCIÓN: Prepara un empleado en blanco para el modal
+  const handleNuevoEmpleado = () => {
+    setEmpleadoSeleccionado({
+      id: null,
+      dpi: '',
+      nombres: '',
+      apellidos: '',
+      fecha_nacimiento: '',
+      direccion: '',
+      telefono: '',
+      puesto: '',
+      departamento: '',
+      estado: 'ACTIVO',
+      salario_base: 0
+    });
+    setIsModalOpen(true);
+  };
+
+  // 2. MODIFICADA: Ahora sabe si CREAR o ACTUALIZAR
   const handleSaveEmpleado = async (datosActualizados: any) => {
     try {
       const empleadoLimpio = {
@@ -36,7 +54,7 @@ export const EmpleadosList: React.FC = () => {
         dpi: datosActualizados.dpi,
         nombres: datosActualizados.nombres,
         apellidos: datosActualizados.apellidos,
-        fecha_nacimiento: datosActualizados.fecha_nacimiento,
+        fecha_nacimiento: datosActualizados.fecha_nacimiento || null, // Evitar mandar strings vacíos en fechas
         direccion: datosActualizados.direccion,
         telefono: datosActualizados.telefono,
         puesto: datosActualizados.puesto,
@@ -45,9 +63,16 @@ export const EmpleadosList: React.FC = () => {
         salario_base: Number(datosActualizados.salario_base) 
       };
 
-      await EmpleadosService.update(empleadoLimpio.id, empleadoLimpio);
+      if (empleadoLimpio.id) {
+        // Si tiene ID, lo actualizamos
+        await EmpleadosService.update(empleadoLimpio.id, empleadoLimpio);
+        alert("¡Empleado actualizado correctamente!");
+      } else {
+        // Si NO tiene ID, lo creamos
+        await EmpleadosService.create(empleadoLimpio);
+        alert("¡Empleado creado correctamente!");
+      }
 
-      alert("¡Empleado actualizado correctamente!");
       setIsModalOpen(false);
       cargarEmpleados();
     } catch (err: any) {
@@ -55,7 +80,7 @@ export const EmpleadosList: React.FC = () => {
         ? err.response?.data?.message[0]
         : err.response?.data?.message;
 
-      alert(mensaje || "Error al actualizar");
+      alert(mensaje || "Error al procesar la solicitud");
     }
   };
 
@@ -70,7 +95,6 @@ export const EmpleadosList: React.FC = () => {
     ? empleados
     : empleados.filter(e => e.estado === filtro);
 
-
   return (
     <div className="max-w-5xl relative">
 
@@ -80,7 +104,11 @@ export const EmpleadosList: React.FC = () => {
           <h1 className="text-5xl font-bold text-[#a4ab9a] mb-2 tracking-wide">Directorio</h1>
           <h2 className="text-3xl font-medium text-gray-800">Gestión de Empleados</h2>
         </div>
-        <button className="bg-[#a4ab9a] hover:bg-[#8c967a] text-white px-6 py-3 rounded-full font-bold shadow-md transition-all">
+        {/* 3. MODIFICADO: Agregamos el onClick al botón */}
+        <button 
+          onClick={handleNuevoEmpleado}
+          className="bg-[#a4ab9a] hover:bg-[#8c967a] text-white px-6 py-3 rounded-full font-bold shadow-md transition-all"
+        >
           + Nuevo Empleado
         </button>
       </div>
@@ -193,12 +221,16 @@ export const EmpleadosList: React.FC = () => {
           </div>
         )}
       </div>
-      <ModalEditarEmpleado
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        empleado={empleadoSeleccionado}
-        onSave={handleSaveEmpleado}
-      />
+      
+      {/* Componente Modal */}
+      {isModalOpen && (
+        <ModalEditarEmpleado
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          empleado={empleadoSeleccionado}
+          onSave={handleSaveEmpleado}
+        />
+      )}
     </div>
   );
 };

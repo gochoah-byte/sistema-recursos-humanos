@@ -53,21 +53,28 @@ export class EmpleadosService {
   }
   
   async findOne(id: number) {
-  const empleado = await this.prisma.empleados.findUnique({
-    where: { id },
-  });
+    const empleadoId = Number(id);
 
-  if (!empleado) {
-    return {
-      message: 'Empleado no encontrado',
-    };
+    // NUEVA LÍNEA: Si el ID enviado es "undefined" o texto, se detiene y devuelve nulo.
+    if (isNaN(empleadoId) || empleadoId === 0) {
+      return null;
+    }
+
+    const empleado = await this.prisma.empleados.findUnique({
+      where: { id: empleadoId },
+    });
+
+    if (!empleado) {
+      return { message: 'Empleado no encontrado' };
+    }
+
+    return empleado;
   }
 
-  return empleado;
-}
-
   async update(id: number, updateEmpleadoDto: any) {
-    const empleado = await this.prisma.empleados.findUnique({ where: { id } });
+    const empleadoId = Number(id); // CORRECCIÓN
+    
+    const empleado = await this.prisma.empleados.findUnique({ where: { id: empleadoId } });
     if (!empleado) {
       throw new NotFoundException(`Empleado con ID ${id} no encontrado`);
     }
@@ -81,14 +88,16 @@ export class EmpleadosService {
     }
 
     return this.prisma.empleados.update({
-      where: { id },
+      where: { id: empleadoId }, // CORRECCIÓN
       data: updateEmpleadoDto,
     });
   }
 
   async remove(id: number) {
+    const empleadoId = Number(id); // CORRECCIÓN
+
     const empleado = await this.prisma.empleados.findUnique({
-      where: { id },
+      where: { id: empleadoId }, // CORRECCIÓN
     });
 
     if (!empleado) {
@@ -96,17 +105,17 @@ export class EmpleadosService {
     }
 
     const empleadoInactivo = await this.prisma.empleados.update({
-      where: { id },
+      where: { id: empleadoId }, // CORRECCIÓN
       data: {
         estado: 'SUSPENDIDO'
       },
     });
 
     await this.auditoriaService.create({
-      usuario_id: 5, // Aquí deberías pasar el ID del usuario que está logueado
+      usuario_id: 5, // Recuerda cambiar esto más adelante por el usuario logueado real
       accion: 'SOFT_DELETE_EMPLEADO',
       entidad: 'empleados',
-      entidad_id: id,
+      entidad_id: empleadoId,
       descripcion: `Se cambió el estado del empleado ${empleado.nombres} ${empleado.apellidos} a SUSPENDIDO.`,
     });
 
@@ -117,7 +126,6 @@ export class EmpleadosService {
   }
 
   async findIncompletos() {
-
     const incompletos = await this.prisma.empleados.findMany({
       where: {
         documentos: {

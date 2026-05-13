@@ -31,6 +31,14 @@ export const Login: React.FC<LoginProps> = ({ setRole }) => {
         // Guardamos los datos de la sesión
         localStorage.setItem('token', access_token);
         localStorage.setItem('rol', usuario.rol);
+        
+        // Guardamos empleado_id si existe (para empleados)
+        // Si no existe (como en Admin), lo removemos del localStorage
+        if (usuario.empleado_id) {
+          localStorage.setItem('empleadoId', usuario.empleado_id);
+        } else {
+          localStorage.removeItem('empleadoId');
+        }
 
         setRole(usuario.rol);
 

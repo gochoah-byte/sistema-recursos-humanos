@@ -11,3 +11,10 @@ export const subirDocumento = (formData: FormData) =>
       'Content-Type': 'multipart/form-data',
     },
   });
+
+export const DocumentosService = {
+  getAll: async () => {
+    const response = await api.get('/documentos');
+    return response.data;
+  }
+};

@@ -15,6 +15,9 @@ export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) 
 
     if (!isOpen || !formData) return null;
 
+    // Si el empleado tiene un ID, significa que estamos editando. Si no, es nuevo.
+    const esEdicion = !!formData?.id;
+
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
@@ -26,8 +29,10 @@ export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) 
                             <span className="text-2xl">👤</span>
                         </div>
                         <div>
-                            <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-80">Editar Expediente</h3>
-                            <p className="text-xl font-bold">{formData.nombres} {formData.apellidos}</p>
+                            <h2 className="text-xs font-black uppercase tracking-[0.2em] opacity-80">
+                                {esEdicion ? 'Editar Expediente' : 'Nuevo Empleado'}
+                            </h2>
+                            <p className="text-xl font-bold">{formData.nombres || 'Formulario de Registro'} {esEdicion ? formData.apellidos : ''}</p>
                         </div>
                     </div>
                     <button
@@ -66,11 +71,24 @@ export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) 
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-wider">Número de DPI (No editable)</label>
-                            <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-gray-400">
-                                <img src={lockIcon} alt="Candado" className="w-5 h-5 object-contain opacity-70" />
-                                <span className="font-mono">{formData.dpi}</span>
-                            </div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-wider">
+                                Número de DPI {esEdicion ? '(No editable)' : '*'}
+                            </label>
+                            {esEdicion ? (
+                                <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-gray-400">
+                                    <img src={lockIcon} alt="Candado" className="w-5 h-5 object-contain opacity-70" />
+                                    <span className="font-mono">{formData.dpi}</span>
+                                </div>
+                            ) : (
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.dpi}
+                                    onChange={(e) => setFormData({...formData, dpi: e.target.value})}
+                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 focus:ring-[#a4ab9a] focus:border-transparent outline-none transition-all shadow-sm"
+                                    placeholder="Ej: 12345678-9"
+                                />
+                            )}
                         </div>
 
                         <div>
@@ -145,7 +163,7 @@ export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) 
                             onClick={() => onSave(formData)}
                             className="bg-[#a4ab9a] hover:bg-[#8c967a] text-white px-10 py-3 rounded-2xl font-bold shadow-[0_10px_20px_rgba(164,171,154,0.3)] transition-all active:scale-95 flex items-center gap-2"
                         >
-                            <span>Actualizar Expediente</span>
+                            <span>{esEdicion ? 'Actualizar Expediente' : 'Crear Empleado'}</span>
                         </button>
                     </div>
                 </div>

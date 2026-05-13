@@ -88,14 +88,18 @@ export class UsuariosService {
       usuario: {
         correo: user.correo,
         rol: user.rol,
+        empleado_id: user.empleado_id, // ESTA ES LA LÍNEA QUE ARREGLA EL DASHBOARD DEL EMPLEADO
         nombreCompleto: `${user.empleados?.nombres} ${user.empleados?.apellidos}`
       }
     };
   }
 
   async findOne(id: number) {
+    const usuarioId = Number(id);
+    if (isNaN(usuarioId) || usuarioId === 0) return null;
+
     const usuario = await this.prisma.usuarios.findUnique({
-      where: { id },
+      where: { id: usuarioId },
       include: {
         empleados: {
           select: { nombres: true, apellidos: true }
@@ -111,7 +115,9 @@ export class UsuariosService {
   }
 
   async update(id: number, updateUsuarioDto: UpdateUsuarioDto) {  
-    const usuarioExistente = await this.prisma.usuarios.findUnique({ where: { id } });
+    const usuarioId = Number(id);
+    const usuarioExistente = await this.prisma.usuarios.findUnique({ where: { id: usuarioId } });
+    
     if (!usuarioExistente) {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
@@ -122,13 +128,13 @@ export class UsuariosService {
 
     try {
       return await this.prisma.usuarios.update({
-        where: { id },
+        where: { id: usuarioId },
         data: updateUsuarioDto,
       });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2002') {
-          throw new ConflictException('Este empleado ya tiene un usuario asignado.');
+          throw new ConflictException('Este empleado ya tiene un usuario asignado o el correo está en uso.');
         }
       }
       throw error;
@@ -136,15 +142,17 @@ export class UsuariosService {
   }
 
   async remove(id: number) {
+    const usuarioId = Number(id);
     const usuario = await this.prisma.usuarios.findUnique({
-      where: { id },
+      where: { id: usuarioId },
     });
 
     if (!usuario) {
       throw new NotFoundException(`No se puede eliminar: El usuario con ID ${id} no existe.`);
     }
+    
     return this.prisma.usuarios.delete({
-      where: { id },
+      where: { id: usuarioId },
     });
   }
 }
