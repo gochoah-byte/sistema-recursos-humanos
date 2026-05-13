@@ -70,18 +70,40 @@ export const Documentos: React.FC = () => {
   init();
 }, []);
 
-  const calcularEstado = (empleadoId: number) => {
-    const docs = docsPorEmpleado[empleadoId] || [];
-    const obligatorios = tipos.filter((t) => t.es_obligatorio);
+const calcularEstado = (empleadoId: number) => {
+  const docs = docsPorEmpleado[empleadoId] || [];
 
-    if (docs.length === 0) return "Incompleto";
-
-    const completo = obligatorios.every((t) =>
-      docs.some((d) => Number(d.tipo_documento_id) === Number(t.id))
+  const nombres = docs.map((d: Documento) => {
+    const tipo = tipos.find(
+      (t) => Number(t.id) === Number(d.tipo_documento_id)
     );
 
-    return completo ? "Completo" : "En Proceso";
-  };
+    return tipo?.nombre?.toLowerCase() || "";
+  });
+
+  const obligatorios = [
+    "dpi",
+    "penal",
+    "policia",
+    "cv",
+    "contrato",
+    "titulo"
+  ];
+
+  const completos = obligatorios.filter((req) =>
+    nombres.some((n) => n.includes(req))
+  );
+
+  if (completos.length === obligatorios.length) {
+    return "Completo";
+  }
+
+  if (completos.length >= 3) {
+    return "En Proceso";
+  }
+
+  return "Incompleto";
+};
 
   const abrirModal = (id: number) => {
     setEmpleadoId(id);
@@ -125,72 +147,266 @@ export const Documentos: React.FC = () => {
       <h2 className="text-2xl font-bold mb-4">Expediente Digital</h2>
 
       {/* 🔹 FOLDERS */}
-      <div className="flex gap-3 mb-6">
-        <button className="bg-green-100 px-4 py-2 rounded">
-          Obligatorios
-        </button>
-        <button className="bg-yellow-100 px-4 py-2 rounded">
-          Académicos
-        </button>
-        <button className="bg-blue-100 px-4 py-2 rounded">
-          Contratos
-        </button>
-      </div>
+     {/* 🔹 ESTADÍSTICAS */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
+  {/* COMPLETOS */}
+  <div className="bg-[#eef4ea] rounded-3xl p-6 shadow-lg">
+    <h3 className="text-gray-500 text-sm font-semibold">
+      EXPEDIENTES COMPLETOS
+    </h3>
+
+    <h1 className="text-5xl font-bold text-[#7b8b70] mt-4">
+      {
+        empleados.filter(
+          (e) => calcularEstado(e.id) === "Completo"
+        ).length
+      }
+    </h1>
+
+    <p className="text-gray-500 mt-2">
+      Documentación completa
+    </p>
+  </div>
+
+  {/* EN PROCESO */}
+<div className="bg-[#fbeae0] rounded-3xl p-6 shadow-lg">
+    <h3 className="text-gray-500 text-sm font-semibold">
+      EN PROCESO
+    </h3>
+
+    <h1 className="text-5xl font-bold text-[#c59c7d] mt-4">
+      {
+        empleados.filter(
+          (e) => calcularEstado(e.id) === "En Proceso"
+        ).length
+      }
+    </h1>
+
+    <p className="text-gray-500 mt-2">
+      Documentos pendientes
+    </p>
+  </div>
+
+  {/* INCOMPLETOS */}
+  <div className="bg-[#fdecec] rounded-3xl p-6 shadow-lg">
+    <h3 className="text-gray-500 text-sm font-semibold">
+      INCOMPLETOS
+    </h3>
+
+    <h1 className="text-5xl font-bold text-[#d46a6a] mt-4">
+      {
+        empleados.filter(
+          (e) => calcularEstado(e.id) === "Incompleto"
+        ).length
+      }
+    </h1>
+
+    <p className="text-gray-500 mt-2">
+      Expedientes faltantes
+    </p>
+  </div>
+</div>
       {/* 🔹 TABLA */}
-      <table className="w-full border">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="p-2">Empleado</th>
-            <th className="p-2">DPI</th>
-            <th className="p-2">Estado</th>
-            <th className="p-2">Acción</th>
-          </tr>
-        </thead>
+     <div className="bg-white rounded-3xl shadow-lg overflow-hidden border border-gray-100">
 
-        <tbody>
-          {empleados.map((emp) => {
-            const estado = calcularEstado(emp.id);
+  <div className="bg-[#a4ab9a] text-white px-6 py-4 flex justify-between items-center">
+    <div>
+      <h3 className="text-xl font-bold">Gestión de Expedientes</h3>
+      <p className="text-sm opacity-80">
+        Validación de documentos por empleado
+      </p>
+    </div>
+  </div>
 
-            return (
-              <tr key={emp.id}>
-                <td className="p-2">
-                  {emp.nombres} {emp.apellidos}
-                </td>
-                <td className="p-2">{emp.dpi}</td>
+  <div className="overflow-x-auto">
+    <table className="w-full">
 
-                <td className="p-2">
-                  <span
-                    className={`font-bold ${
-                      estado === "Completo"
-                        ? "text-green-500"
-                        : estado === "Incompleto"
-                        ? "text-red-500"
-                        : "text-yellow-500"
-                    }`}
-                  >
-                    ● {estado}
-                  </span>
-                </td>
+      <thead className="bg-gray-50 text-gray-700">
+        <tr>
+          <th className="p-4 text-left">Empleado</th>
+          <th className="p-4 text-left">DPI</th>
+          <th className="p-4 text-center">Penales</th>
+          <th className="p-4 text-center">Policíacos</th>
+          <th className="p-4 text-center">CV</th>
+          <th className="p-4 text-center">Título</th>
+          <th className="p-4 text-center">Contrato</th>
+          <th className="p-4 text-center">Estado</th>
+          <th className="p-4 text-center">Acciones</th>
+        </tr>
+      </thead>
 
-                <td className="p-2">
-                  <button
-                    onClick={() => abrirModal(emp.id)}
-                    className="bg-blue-500 text-white px-3 py-1 rounded"
-                  >
-                    Subir
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+     <tbody>
+  {empleados.map((emp) => {
+    const docs = docsPorEmpleado[emp.id] || [];
+
+    const tieneDocumento = (nombre: string) => {
+      return docs.some((d: Documento) => {
+        const tipo = tipos.find(
+          (t) => Number(t.id) === Number(d.tipo_documento_id)
+        );
+
+        return tipo?.nombre
+          ?.toLowerCase()
+          .includes(nombre.toLowerCase());
+      });
+    };
+
+    const estado = calcularEstado(emp.id);
+
+    return (
+      <tr
+        key={emp.id}
+        className="border-b hover:bg-gray-50 transition-all"
+      >
+        {/* EMPLEADO */}
+        <td className="p-4 font-semibold text-gray-800">
+          {emp.nombres} {emp.apellidos}
+        </td>
+
+        {/* DPI */}
+        <td className="p-4 text-gray-600">{emp.dpi}</td>
+
+        {/* PENALES */}
+        <td className="p-4 text-center">
+          <span
+            className={`inline-block w-4 h-4 rounded-full ${
+              tieneDocumento("penal")
+                ? "bg-green-500"
+                : "bg-red-500"
+            }`}
+          ></span>
+        </td>
+
+        {/* POLICIACOS */}
+        <td className="p-4 text-center">
+          <span
+            className={`inline-block w-4 h-4 rounded-full ${
+              tieneDocumento("policia")
+                ? "bg-green-500"
+                : "bg-red-500"
+            }`}
+          ></span>
+        </td>
+
+        {/* CV */}
+        <td className="p-4 text-center">
+          <span
+            className={`inline-block w-4 h-4 rounded-full ${
+              tieneDocumento("cv")
+                ? "bg-green-500"
+                : "bg-red-500"
+            }`}
+          ></span>
+        </td>
+
+        {/* TITULO */}
+        <td className="p-4 text-center">
+          <span
+            className={`inline-block w-4 h-4 rounded-full ${
+              tieneDocumento("titulo")
+                ? "bg-green-500"
+                : "bg-red-500"
+            }`}
+          ></span>
+        </td>
+
+        {/* CONTRATO */}
+        <td className="p-4 text-center">
+          <span
+            className={`inline-block w-4 h-4 rounded-full ${
+              tieneDocumento("contrato")
+                ? "bg-green-500"
+                : "bg-red-500"
+            }`}
+          ></span>
+        </td>
+
+        {/* ESTADO */}
+        <td className="p-4 text-center">
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-bold ${
+              estado === "Completo"
+                ? "bg-green-100 text-green-700"
+                : estado === "En Proceso"
+                ? "bg-yellow-100 text-yellow-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
+            {estado}
+          </span>
+        </td>
+
+        {/* ACCIONES */}
+        <td className="p-4">
+          <div className="flex justify-center gap-2">
+
+            <button
+              onClick={() => abrirModal(emp.id)}
+              className="bg-[#a4ab9a] hover:bg-[#929a88] text-white px-3 py-1 rounded-lg text-sm"
+            >
+              Subir
+            </button>
+
+            <button
+  onClick={() => {
+    const docs = docsPorEmpleado[emp.id] || [];
+
+    if (docs.length === 0) {
+      alert("Este empleado no tiene documentos.");
+      return;
+    }
+
+    const lista = docs
+      .map((d: Documento) => {
+        const tipo = tipos.find(
+          (t) => Number(t.id) === Number(d.tipo_documento_id)
+        );
+
+        return `• ${tipo?.nombre || "Documento"}`;
+      })
+      .join("\n");
+
+    alert(
+      `DOCUMENTOS DE ${emp.nombres} ${emp.apellidos}\n\n${lista}`
+    );
+  }}
+  className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm"
+>
+  Ver
+</button>
+
+            <button
+  onClick={() => {
+    const confirmar = confirm(
+      `¿Deseas eliminar los documentos de ${emp.nombres}?`
+    );
+
+    if (!confirmar) return;
+
+    alert(
+      `Aquí conectarás el DELETE del backend para ${emp.nombres}`
+    );
+  }}
+  className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm"
+>
+  Eliminar
+</button>
+
+          </div>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
+    </table>
+  </div>
+</div>
 
       {/* 🔹 MODAL */}
       {modal && (
         <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded w-96">
+          <div className="bg-white p-8 rounded-3xl w-[450px] shadow-2xl border border-gray-100">
             <h3 className="text-lg font-bold mb-4">Subir Documento</h3>
 
             <form onSubmit={handleSubmit}>
@@ -226,7 +442,7 @@ export const Documentos: React.FC = () => {
 
               <button
                 type="submit"
-                className="bg-green-500 text-white w-full py-2 rounded"
+              className="bg-[#a4ab9a] hover:bg-[#8d9583] text-white w-full py-3 rounded-2xl transition-all font-semibold"
               >
                 Subir
               </button>
@@ -234,7 +450,7 @@ export const Documentos: React.FC = () => {
 
             <button
               onClick={() => setModal(false)}
-              className="mt-3 w-full text-gray-600"
+              className="mt-4 w-full text-gray-500 hover:text-gray-700 transition-all"
             >
               Cancelar
             </button>

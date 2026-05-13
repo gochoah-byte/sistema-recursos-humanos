@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // IMPORTACIONES DE TUS COMPONENTES YA EXISTENTES Y SERVICIOS
 import { EmpleadosList } from '../empleados/EmpleadosList';
+import { Documentos } from '../documentos/Documentos';
 import { UsuariosModulo } from './UsuariosModulo'; // El que hicimos en el mensaje anterior
 import { NominaService } from '../../service/nomina.service';
 import { AuditoriaService } from '../../service/auditoria.service';
@@ -32,9 +33,9 @@ const ModuloNomina: React.FC = () => {
     const fechaFin = prompt("Ingrese la fecha de fin (YYYY-MM-DD):");
     if (fechaInicio && fechaFin) {
       try {
-        await NominaService.createPeriodo({ fecha_inicio: fechaInicio, fecha_fin: fechaFin, estado: 'ABIERTO' });
-        const data = await NominaService.getPeriodos(); // Recargar
-        setPeriodos(data);
+        //await NominaService.createPeriodo({ fecha_inicio: fechaInicio, fecha_fin: fechaFin, estado: 'ABIERTO' });
+        //const data = await NominaService.getPeriodos(); // Recargar
+        //setPeriodos(data);
       } catch (error) {
         alert("Error al crear el período.");
       }
@@ -45,7 +46,7 @@ const ModuloNomina: React.FC = () => {
     <div className="w-full">
       <div className="flex justify-between items-center mb-4">
         <p className="text-gray-500">Períodos de nómina y planillas.</p>
-        <button onClick={handleCrearPeriodo} className="bg-[#fbeae0] text-gray-800 border border-gray-300 px-4 py-2 rounded-lg hover:bg-[#e8d5cb] font-bold">
+        <button onClick={handleCrearPeriodo} className="bg-[#a4ab9a] text-gray-800 border border-gray-300 px-4 py-2 rounded-lg hover:bg-[#e8d5cb] font-bold">
           + Abrir Nuevo Período
         </button>
       </div>
@@ -219,6 +220,24 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </section>
       </div>
+
+{/* 4. GESTIÓN DE EXPEDIENTES */}
+<section className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+  <div className="bg-[#a4ab9a] text-white px-6 py-4 flex items-center justify-between">
+    <div className="flex items-center">
+      <span className="text-2xl mr-3">📁</span>
+      <h2 className="text-xl font-bold">Expedientes Digitales</h2>
+    </div>
+
+    <span className="text-white text-xs bg-[#8f9685] px-3 py-1 rounded-full">
+      Documentos, Académicos, Contratos
+    </span>
+  </div>
+
+  <div className="p-6 bg-white">
+    <Documentos />
+  </div>
+</section>
 
       {/* 4. GESTIONAR NÓMINA (Funcional) */}
       <section className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
