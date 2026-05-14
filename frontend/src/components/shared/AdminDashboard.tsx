@@ -160,19 +160,22 @@ export const AdminDashboard: React.FC = () => {
         <p className="text-gray-500 mt-2">Todas las funciones operativas centralizadas en una sola pantalla.</p>
       </div>
 
-      {/* 1. GESTIONAR USUARIOS */}
-      <section className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="bg-gray-800 text-white px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center">
-            <span className="text-2xl mr-3">🔐</span>
-            <h2 className="text-xl font-bold">Gestión de Usuarios</h2>
-          </div>
-          <span className="text-xs bg-gray-600 px-3 py-1 rounded-full">Crear, Editar, Eliminar, Roles</span>
-        </div>
-        <div className="p-6 bg-white">
-          <UsuariosModulo />
-        </div>
-      </section>
+     {/* 1. GESTIONAR USUARIOS */}
+<section className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+  <div className="bg-[#a4ab9a] text-white px-6 py-4 flex items-center justify-between">
+    <div className="flex items-center">
+      <span className="text-2xl mr-3">🔐</span>
+      <h2 className="text-xl font-bold">Gestión de Usuarios</h2>
+    </div>
+    <span className="text-xs bg-[#8e9485] px-3 py-1 rounded-full">
+      Crear, Editar, Eliminar, Roles
+    </span>
+  </div>
+
+  <div className="p-6 bg-white">
+    <UsuariosModulo />
+  </div>
+</section>
 
       {/* 2. GESTIONAR EMPLEADOS */}
       <section className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
