@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma.service';
 import { CreateEmpleadoDto } from './dto/create-empleado.dto';
 import { AuditoriaService } from '../auditoria/auditoria.service';
+import { UpdateEmpleadoDto } from './dto/update-empleado.dto';
 
 @Injectable()
 export class EmpleadosService {
@@ -32,7 +33,9 @@ export class EmpleadosService {
       if (error.code === 'P2002') {
         throw new BadRequestException('El DPI ya está registrado en el sistema');
       }
+      throw error;
     }
+    
   }
 
   async findAll(estado?: string) {
@@ -57,16 +60,17 @@ export class EmpleadosService {
     where: { id },
   });
 
-  if (!empleado) {
-    return {
-      message: 'Empleado no encontrado',
-    };
-  }
+ if (!empleado) {
+  throw new NotFoundException(
+    `Empleado con ID ${id} no encontrado`
+  );
+}
 
   return empleado;
 }
 
-  async update(id: number, updateEmpleadoDto: any) {
+ 
+  async update(id: number, updateEmpleadoDto: UpdateEmpleadoDto) {
     const empleado = await this.prisma.empleados.findUnique({ where: { id } });
     if (!empleado) {
       throw new NotFoundException(`Empleado con ID ${id} no encontrado`);
@@ -76,14 +80,17 @@ export class EmpleadosService {
       throw new BadRequestException('El nombre y el DPI son campos obligatorios');
     }
 
-    if (updateEmpleadoDto.fecha_nacimiento) {
-      updateEmpleadoDto.fecha_nacimiento = new Date(updateEmpleadoDto.fecha_nacimiento);
-    }
+    const data = {
+  ...updateEmpleadoDto,
+  fecha_nacimiento: updateEmpleadoDto.fecha_nacimiento
+    ? new Date(updateEmpleadoDto.fecha_nacimiento)
+    : undefined,
+};
 
-    return this.prisma.empleados.update({
-      where: { id },
-      data: updateEmpleadoDto,
-    });
+return this.prisma.empleados.update({
+  where: { id },
+  data,
+});
   }
 
   async remove(id: number) {
