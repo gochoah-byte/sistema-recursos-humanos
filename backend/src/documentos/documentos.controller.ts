@@ -1,6 +1,7 @@
 import { Controller, Post, UseInterceptors, UploadedFile, Body, Get, Param, Delete, BadRequestException, NotFoundException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { extname } from 'path';
 import { DocumentosService } from './documentos.service';
 import { ApiConsumes, ApiBody, ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
@@ -36,23 +37,6 @@ export class DocumentosController {
     if (!file) {
       throw new BadRequestException('No se ha seleccionado ningún archivo');
     }
-    const tiposPermitidos = [
-  'application/pdf',
-  'image/png',
-  'image/jpeg'
-];
-
-if (!tiposPermitidos.includes(file.mimetype)) {
-  throw new BadRequestException(
-    'Tipo de archivo no permitido'
-  );
-}
-// VALIDAR TAMAÑO
-if (file.size > 5 * 1024 * 1024) {
-  throw new BadRequestException(
-    'El archivo supera los 5MB'
-  );
-}
 
     // Convertimos a número porque en multipart/form-data llegan como strings
     const metadata = {
