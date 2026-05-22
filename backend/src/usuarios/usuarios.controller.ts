@@ -3,6 +3,7 @@ import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { LoginUsuarioDto } from './dto/login-usuario.dto';
 
 @ApiTags('Usuarios')
 @Controller('usuarios')
@@ -20,7 +21,8 @@ export class UsuariosController {
       }
     }
   })
-  async login(@Body() body: { correo: string; contrasena: string }) {
+  
+ async login(@Body() body: LoginUsuarioDto) {
     return this.usuariosService.login(body.correo, body.contrasena);
   }
 

@@ -14,6 +14,20 @@ export class UsuariosService {
   ) { }
 
   async create(createUsuarioDto: CreateUsuarioDto) {
+    if (createUsuarioDto.empleado_id) {
+
+  const empleadoExiste = await this.prisma.empleados.findUnique({
+    where: {
+      id: createUsuarioDto.empleado_id
+    }
+  });
+
+  if (!empleadoExiste) {
+    throw new NotFoundException(
+      `El empleado con ID ${createUsuarioDto.empleado_id} no existe`
+    );
+  }
+}
     try {
       const salt = await bcrypt.genSalt(10);
       const contrasenaHasheada = await bcrypt.hash(createUsuarioDto.contrasena, salt);
@@ -44,18 +58,30 @@ export class UsuariosService {
   }
 
   async findAll() {
-    const lista = await this.prisma.usuarios.findMany({
-      include: { empleados: { select: { nombres: true, apellidos: true } } }
-    });
-
-    if (lista.length === 0) {
-      return {
-        message: 'No se encontraron usuarios registrados en el sistema',
-        data: []
-      };
+  const lista = await this.prisma.usuarios.findMany({
+    select: {
+      id: true,
+      correo: true,
+      rol: true,
+      empleado_id: true,
+      empleados: {
+        select: {
+          nombres: true,
+          apellidos: true
+        }
+      }
     }
-    return lista;
+  });
+
+  if (lista.length === 0) {
+    return {
+      message: 'No se encontraron usuarios registrados en el sistema',
+      data: []
+    };
   }
+
+  return lista;
+}
 
   
   async login(correo: string, contrasena: string) {
@@ -99,13 +125,28 @@ export class UsuariosService {
     if (isNaN(usuarioId) || usuarioId === 0) return null;
 
     const usuario = await this.prisma.usuarios.findUnique({
+<<<<<<< HEAD
       where: { id: usuarioId },
       include: {
         empleados: {
           select: { nombres: true, apellidos: true }
         }
+=======
+  where: { id },
+  select: {
+    id: true,
+    correo: true,
+    rol: true,
+    empleado_id: true,
+    empleados: {
+      select: {
+        nombres: true,
+        apellidos: true
+>>>>>>> Feature/backend-validations
       }
-    });
+    }
+  }
+});
 
     if (!usuario) {
       throw new NotFoundException(`El usuario con ID ${id} no existe en la base de datos`);
@@ -114,6 +155,7 @@ export class UsuariosService {
     return usuario;
   }
 
+<<<<<<< HEAD
   async update(id: number, updateUsuarioDto: UpdateUsuarioDto) {  
     const usuarioId = Number(id);
     const usuarioExistente = await this.prisma.usuarios.findUnique({ where: { id: usuarioId } });
@@ -121,11 +163,15 @@ export class UsuariosService {
     if (!usuarioExistente) {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
+=======
+ async update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
+>>>>>>> Feature/backend-validations
 
-    if (updateUsuarioDto.contrasena) {
-      updateUsuarioDto.contrasena = await bcrypt.hash(updateUsuarioDto.contrasena, 10);
-    }
+  const usuarioExistente = await this.prisma.usuarios.findUnique({
+    where: { id }
+  });
 
+<<<<<<< HEAD
     try {
       return await this.prisma.usuarios.update({
         where: { id: usuarioId },
@@ -136,10 +182,62 @@ export class UsuariosService {
         if (error.code === 'P2002') {
           throw new ConflictException('Este empleado ya tiene un usuario asignado o el correo está en uso.');
         }
+=======
+  if (!usuarioExistente) {
+    throw new NotFoundException(
+      `Usuario con ID ${id} no encontrado`
+    );
+  }
+
+  if (updateUsuarioDto.empleado_id) {
+
+    const empleadoExiste = await this.prisma.empleados.findUnique({
+      where: {
+        id: updateUsuarioDto.empleado_id
+>>>>>>> Feature/backend-validations
       }
-      throw error;
+    });
+
+    if (!empleadoExiste) {
+      throw new NotFoundException(
+        `El empleado con ID ${updateUsuarioDto.empleado_id} no existe`
+      );
     }
   }
+
+  if (updateUsuarioDto.contrasena) {
+    updateUsuarioDto.contrasena = await bcrypt.hash(
+      updateUsuarioDto.contrasena,
+      10
+    );
+  }
+
+  if (updateUsuarioDto.rol) {
+  updateUsuarioDto.rol =
+    updateUsuarioDto.rol.toUpperCase() as any;
+}
+
+  try {
+
+    return await this.prisma.usuarios.update({
+      where: { id },
+      data: updateUsuarioDto,
+    });
+
+  } catch (error) {
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+
+      if (error.code === 'P2002') {
+        throw new ConflictException(
+          'Este empleado ya tiene un usuario asignado.'
+        );
+      }
+    }
+
+    throw error;
+  }
+}
 
   async remove(id: number) {
     const usuarioId = Number(id);

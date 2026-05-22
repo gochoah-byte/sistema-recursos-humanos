@@ -2,19 +2,25 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../prisma.service';
 import { CreateEmpleadoDto } from './dto/create-empleado.dto';
 import { AuditoriaService } from '../auditoria/auditoria.service';
+import { UpdateEmpleadoDto } from './dto/update-empleado.dto';
 
 @Injectable()
 export class EmpleadosService {
-  constructor(private prisma: PrismaService, private auditoriaService: AuditoriaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private auditoriaService: AuditoriaService
+  ) {}
 
   async create(createEmpleadoDto: CreateEmpleadoDto) {
-    try{
-        const nuevoEmpleado = await this.prisma.empleados.create({
+    try {
+      const nuevoEmpleado = await this.prisma.empleados.create({
         data: {
           dpi: createEmpleadoDto.dpi,
           nombres: createEmpleadoDto.nombres,
           apellidos: createEmpleadoDto.apellidos,
-          fecha_nacimiento: createEmpleadoDto.fecha_nacimiento ? new Date(createEmpleadoDto.fecha_nacimiento) : null,
+          fecha_nacimiento: createEmpleadoDto.fecha_nacimiento
+            ? new Date(createEmpleadoDto.fecha_nacimiento)
+            : null,
           direccion: createEmpleadoDto.direccion,
           telefono: createEmpleadoDto.telefono,
           salario_base: createEmpleadoDto.salario_base,
@@ -28,34 +34,43 @@ export class EmpleadosService {
         message: 'Empleado registrado correctamente',
         data: nuevoEmpleado,
       };
+
     } catch (error: any) {
       if (error.code === 'P2002') {
-        throw new BadRequestException('El DPI ya está registrado en el sistema');
+        throw new BadRequestException(
+          'El DPI ya está registrado en el sistema'
+        );
       }
+      throw error;
     }
   }
 
   async findAll(estado?: string) {
-    const whereClause = estado && estado !== 'TODOS' ? { estado } : {};
+    const whereClause =
+      estado && estado !== 'TODOS'
+        ? { estado }
+        : {};
+
     const lista = await this.prisma.empleados.findMany({
       where: whereClause,
       orderBy: {
-        salario_base: 'desc' 
+        salario_base: 'desc'
       }
     });
+
     if (lista.length === 0) {
       return {
         message: `No se encontraron empleados registrados ${estado ? 'con estado ' + estado : ''}`,
         data: []
       };
     }
+
     return lista;
   }
-  
+
   async findOne(id: number) {
     const empleadoId = Number(id);
 
-    // NUEVA LÍNEA: Si el ID enviado es "undefined" o texto, se detiene y devuelve nulo.
     if (isNaN(empleadoId) || empleadoId === 0) {
       return null;
     }
@@ -65,54 +80,75 @@ export class EmpleadosService {
     });
 
     if (!empleado) {
-      return { message: 'Empleado no encontrado' };
+      throw new NotFoundException(
+        `Empleado con ID ${id} no encontrado`
+      );
     }
 
     return empleado;
   }
 
-  async update(id: number, updateEmpleadoDto: any) {
-    const empleadoId = Number(id); // CORRECCIÓN
-    
-    const empleado = await this.prisma.empleados.findUnique({ where: { id: empleadoId } });
+  async update(
+    id: number,
+    updateEmpleadoDto: UpdateEmpleadoDto
+  ) {
+
+    const empleadoId = Number(id);
+
+    const empleado = await this.prisma.empleados.findUnique({
+      where: { id: empleadoId }
+    });
+
     if (!empleado) {
-      throw new NotFoundException(`Empleado con ID ${id} no encontrado`);
+      throw new NotFoundException(
+        `Empleado con ID ${id} no encontrado`
+      );
     }
 
-    if (updateEmpleadoDto.nombres === "" || updateEmpleadoDto.dpi === "") {
-      throw new BadRequestException('El nombre y el DPI son campos obligatorios');
+    if (
+      updateEmpleadoDto.nombres === "" ||
+      updateEmpleadoDto.dpi === ""
+    ) {
+      throw new BadRequestException(
+        'El nombre y el DPI son campos obligatorios'
+      );
     }
 
-    if (updateEmpleadoDto.fecha_nacimiento) {
-      updateEmpleadoDto.fecha_nacimiento = new Date(updateEmpleadoDto.fecha_nacimiento);
-    }
+    const data = {
+      ...updateEmpleadoDto,
+      fecha_nacimiento: updateEmpleadoDto.fecha_nacimiento
+        ? new Date(updateEmpleadoDto.fecha_nacimiento)
+        : undefined,
+    };
 
     return this.prisma.empleados.update({
-      where: { id: empleadoId }, // CORRECCIÓN
-      data: updateEmpleadoDto,
+      where: { id: empleadoId },
+      data,
     });
   }
 
   async remove(id: number) {
-    const empleadoId = Number(id); // CORRECCIÓN
+    const empleadoId = Number(id);
 
     const empleado = await this.prisma.empleados.findUnique({
-      where: { id: empleadoId }, // CORRECCIÓN
+      where: { id: empleadoId },
     });
 
     if (!empleado) {
-      throw new NotFoundException(`No se puede procesar: El empleado con ID ${id} no existe.`);
+      throw new NotFoundException(
+        `No se puede procesar: El empleado con ID ${id} no existe.`
+      );
     }
 
     const empleadoInactivo = await this.prisma.empleados.update({
-      where: { id: empleadoId }, // CORRECCIÓN
+      where: { id: empleadoId },
       data: {
         estado: 'SUSPENDIDO'
       },
     });
 
     await this.auditoriaService.create({
-      usuario_id: 5, // Recuerda cambiar esto más adelante por el usuario logueado real
+      usuario_id: 5,
       accion: 'SOFT_DELETE_EMPLEADO',
       entidad: 'empleados',
       entidad_id: empleadoId,
@@ -129,7 +165,7 @@ export class EmpleadosService {
     const incompletos = await this.prisma.empleados.findMany({
       where: {
         documentos: {
-          none: {} 
+          none: {}
         }
       },
       select: {
@@ -147,5 +183,4 @@ export class EmpleadosService {
       empleados: incompletos
     };
   }
-
 }

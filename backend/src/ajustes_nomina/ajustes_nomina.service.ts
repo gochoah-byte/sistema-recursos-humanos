@@ -9,6 +9,32 @@ export class AjustesNominaService {
   constructor(private prisma: PrismaService, private auditoriaService: AuditoriaService) { }
 
   async create(data: CreateAjusteNominaDto) {
+      try {
+        const detalleExiste =
+  await this.prisma.detalles_nomina.findUnique({
+    where: {
+      id: data.detalle_nomina_id
+    }
+  });
+
+if (!detalleExiste) {
+  throw new NotFoundException(
+    'Detalle de nómina no encontrado'
+  );
+}
+
+const usuarioExiste =
+  await this.prisma.usuarios.findUnique({
+    where: {
+      id: data.ajustado_por_usuario_id
+    }
+  });
+
+if (!usuarioExiste) {
+  throw new NotFoundException(
+    'Usuario no encontrado'
+  );
+}
     const nuevoAjuste = await this.prisma.ajustes_nomina.create({
       data: {
         detalle_nomina_id: data.detalle_nomina_id,
@@ -40,8 +66,18 @@ export class AjustesNominaService {
       data: nuevoAjuste,
     };
   }
+   catch (error) {
+
+  console.log(error);
+
+  throw error;
+
+}
+
+}
 
   async findAll() {
+    try {
     return await this.prisma.ajustes_nomina.findMany({
       include: {
         usuarios: {
@@ -51,12 +87,29 @@ export class AjustesNominaService {
       },
       orderBy: { cambiado_en: 'desc' }
     });
+    } catch (error) {
+
+  console.log(error);
+
+  throw error;
+
+}
   }
 
   async findOne(id: number) {
+    try {
     const ajuste = await this.prisma.ajustes_nomina.findUnique({
       where: { id },
-      include: { usuarios: true, detalles_nomina: true }
+     include: {
+  usuarios: {
+    select: {
+      id: true,
+      correo: true,
+      rol: true
+    }
+  },
+  detalles_nomina: true
+}
     });
 
     if (!ajuste) {
@@ -64,15 +117,31 @@ export class AjustesNominaService {
     }
 
     return ajuste;
+    } catch (error) {
+
+  console.log(error);
+
+  throw error;
+
+}
   }
 
   async findByDetalleNomina(detalleId: number) {
+    try {
     return await this.prisma.ajustes_nomina.findMany({
       where: { detalle_nomina_id: detalleId }
     });
+    } catch (error) {
+
+  console.log(error);
+
+  throw error;
+
+}
   }
 
   async update(id: number, data: UpdateAjustesNominaDto) {
+    try {
     const existe = await this.prisma.ajustes_nomina.findUnique({ where: { id } });
 
     if (!existe) throw new NotFoundException('No se encontró el ajuste');
@@ -84,9 +153,17 @@ export class AjustesNominaService {
         razon: data.razon,
       },
     });
+    } catch (error) {
+
+  console.log(error);
+
+  throw error;
+
+}
   }
 
   async remove(id: number) {
+    try {
     const existe = await this.prisma.ajustes_nomina.findUnique({ where: { id } });
     if (!existe) throw new NotFoundException('No se encontró el ajuste');
 
@@ -101,5 +178,13 @@ export class AjustesNominaService {
     });
 
     return { message: 'Ajuste eliminado y acción auditada' };
+    } catch (error) {
+
+  console.log(error);
+
+  throw error;
+
+}
   }
+  
 }
