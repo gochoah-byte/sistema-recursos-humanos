@@ -23,19 +23,19 @@ export const MainLayout: React.FC = () => {
           <p className="text-white text-xs opacity-75 uppercase">{currentRole}</p>
         </div>
         
-  <nav className="flex-1 px-4 mt-4">
-  <Link
-    to="/dashboard"
-    className={`flex items-center px-4 py-3 rounded-full transition-all ${
-      location.pathname === '/dashboard' || location.pathname === '/admin'
-        ? 'bg-white text-[#a4ab9a] shadow-md font-bold'
-        : 'text-white hover:bg-[#b2b9aa]'
-    }`}
-  >
-    <span className="mr-3">🏠</span>
-    Inicio
-  </Link>
-</nav>
+        <nav className="flex-1 px-4 mt-4">
+          <Link
+            to="/dashboard"
+            className={`flex items-center px-4 py-3 rounded-full transition-all ${
+              location.pathname === '/dashboard' || location.pathname === '/admin'
+                ? 'bg-white text-[#a4ab9a] shadow-md font-bold' 
+                : 'text-white hover:bg-[#b2b9aa]'
+            }`}
+          >
+            <span className="mr-3">🏠</span>
+            Inicio
+          </Link>
+        </nav>
         
         <div className="px-8 mt-auto">
           <button 

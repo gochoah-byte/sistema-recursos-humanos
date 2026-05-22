@@ -1,9 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Put, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
-import { LoginUsuarioDto } from './dto/login-usuario.dto';
 
 @ApiTags('Usuarios')
 @Controller('usuarios')
@@ -21,8 +20,7 @@ export class UsuariosController {
       }
     }
   })
-  
- async login(@Body() body: LoginUsuarioDto) {
+  async login(@Body() body: { correo: string; contrasena: string }) {
     return this.usuariosService.login(body.correo, body.contrasena);
   }
 
@@ -49,15 +47,6 @@ export class UsuariosController {
   update(@Param('id') id: string, @Body() updateUsuarioDto: UpdateUsuarioDto) {
     return this.usuariosService.update(+id, updateUsuarioDto);
   }
-
-  @Put(':id')
-@ApiOperation({ summary: 'Actualizar usuario con PUT' })
-updatePut(
-  @Param('id') id: string,
-  @Body() updateUsuarioDto: UpdateUsuarioDto,
-) {
-  return this.usuariosService.update(+id, updateUsuarioDto);
-}
 
   @Delete(':id')
   @ApiOperation({ summary: 'Eliminar usuario' })

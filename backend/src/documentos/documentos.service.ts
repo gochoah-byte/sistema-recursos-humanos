@@ -10,53 +10,35 @@ export class DocumentosService {
   constructor(private prisma: PrismaService, private auditoriaService: AuditoriaService) { }
 
   async saveMetadata(data: {
-  nombre_archivo: string;
-  url_archivo: string;
-  empleado_id: number;
-  tipo_documento_id: number;
-  subido_por_usuario_id: number;
-}) {
+    nombre_archivo: string;
+    url_archivo: string;
+    empleado_id: number;
+    tipo_documento_id: number;
+    subido_por_usuario_id: number;
+  }) {
+    // 1. Creamos el registro del documento
+    const nuevoDoc = await this.prisma.documentos.create({
+      data: {
+        nombre_archivo: data.nombre_archivo,
+        url_archivo: data.url_archivo,
+        empleado_id: data.empleado_id,
+        tipo_documento_id: data.tipo_documento_id,
+        subido_por_usuario_id: data.subido_por_usuario_id,
+        subido_en: new Date(), // Aseguramos la fecha
+      },
+    });
 
-  try {
-
-    const nuevoDoc =
-      await this.prisma.documentos.create({
-        data: {
-          nombre_archivo: data.nombre_archivo,
-          url_archivo: data.url_archivo,
-          empleado_id: data.empleado_id,
-          tipo_documento_id: data.tipo_documento_id,
-          subido_por_usuario_id:
-            data.subido_por_usuario_id,
-          subido_en: new Date(),
-        },
-      });
-
+    // 2. Registramos la auditoría (Esto es lo que faltaba)
     await this.auditoriaService.create({
       usuario_id: data.subido_por_usuario_id,
       accion: 'SUBIR_DOCUMENTO',
       entidad: 'documentos',
       entidad_id: nuevoDoc.id,
-      descripcion:
-        `Se cargó el documento ${data.nombre_archivo} para el empleado ID ${data.empleado_id}`,
+      descripcion: `Se cargó el documento ${data.nombre_archivo} para el empleado ID ${data.empleado_id}`,
     });
 
-    return {
-      message: 'Documento subido correctamente',
-      data: nuevoDoc
-    };
-
-  } catch (error) {
-
-    console.log(error);
-
-    throw new Error(
-      'Error al guardar documento'
-    );
-
+    return nuevoDoc;
   }
-
-}
 
   async findByEmpleado(empleadoId: number) {
     const docs = await this.prisma.documentos.findMany({

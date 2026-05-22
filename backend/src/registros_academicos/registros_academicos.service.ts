@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateRegistrosAcademicoDto } from './dto/create-registros_academico.dto';
 import { UpdateRegistrosAcademicoDto } from './dto/update-registros_academico.dto';
@@ -12,19 +8,6 @@ export class RegistrosAcademicosService {
   constructor(private prisma: PrismaService) { }
 
   async create(data: CreateRegistrosAcademicoDto) {
-    try {
-    const empleadoExiste =
-  await this.prisma.empleados.findUnique({
-    where: {
-      id: data.empleado_id
-    }
-  });
-
-if (!empleadoExiste) {
-  throw new NotFoundException(
-    'Empleado no encontrado'
-  );
-}
     const nuevo = await this.prisma.registros_academicos.create({
       data: {
         empleado_id: data.empleado_id,
@@ -39,17 +22,9 @@ if (!empleadoExiste) {
       message: 'Registro académico creado',
       data: nuevo,
     };
-    } catch (error) {
-
-  console.log(error);
-
-  throw error;
-
-}
   }
 
   async findAll() {
-    
     return await this.prisma.registros_academicos.findMany({
       include: {
         empleados: true, 
@@ -58,46 +33,23 @@ if (!empleadoExiste) {
   }
 
   async findOne(id: number) {
-      try {
-
     const registro = await this.prisma.registros_academicos.findUnique({
       where: { id },
     });
-    
 
     if (!registro) {
       throw new NotFoundException('Registro académico no encontrado');
     }
 
-  return registro;
-
-  } catch (error) {
-
-    console.log(error);
-
-    throw error;
-
+    return registro;
   }
 
-}
-
-async findByEmpleado(empleadoId: number) {
-
-  try {
-
+  async findByEmpleado(empleadoId: number) {
     return await this.prisma.registros_academicos.findMany({
       where: { empleado_id: empleadoId },
     });
-
-  } catch (error) {
-
-    console.log(error);
-
-    throw error;
-
   }
 
-}
   async update(id: number, data: UpdateRegistrosAcademicoDto) {
     const existe = await this.prisma.registros_academicos.findUnique({
       where: { id },
@@ -135,5 +87,4 @@ async findByEmpleado(empleadoId: number) {
 
     return { message: 'Registro eliminado correctamente' };
   }
-  
 }
