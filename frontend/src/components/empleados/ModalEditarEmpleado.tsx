@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import lockIcon from '../../assets/lock.png';
 
 export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) => {
     const [formData, setFormData] = useState<any>(null);
@@ -72,23 +71,21 @@ export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) 
 
                         <div>
                             <label className="block text-[10px] font-black text-gray-400 uppercase mb-2 tracking-wider">
-                                Número de DPI {esEdicion ? '(No editable)' : '*'}
+                                Número de DPI *
                             </label>
-                            {esEdicion ? (
-                                <div className="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-gray-400">
-                                    <img src={lockIcon} alt="Candado" className="w-5 h-5 object-contain opacity-70" />
-                                    <span className="font-mono">{formData.dpi}</span>
-                                </div>
-                            ) : (
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.dpi}
-                                    onChange={(e) => setFormData({...formData, dpi: e.target.value})}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 focus:ring-[#a4ab9a] focus:border-transparent outline-none transition-all shadow-sm"
-                                    placeholder="Ej: 12345678-9"
-                                />
-                            )}
+
+                            <input
+                                type="text"
+                                required
+                                value={formData.dpi}
+                                onChange={(e) => setFormData({ ...formData, dpi: e.target.value })}
+                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 focus:ring-[#a4ab9a] focus:border-transparent outline-none transition-all shadow-sm"
+                                placeholder="Ej: 1234567890101"
+                            />
+
+                            <p className="text-xs text-gray-400 mt-2">
+                                Ingrese el DPI completo del empleado.
+                            </p>
                         </div>
 
                         <div>
