@@ -7,6 +7,8 @@ export const UsuariosModulo: React.FC = () => {
   const [usuarios, setUsuarios] = useState<any[]>([]);
   const [empleados, setEmpleados] = useState<any[]>([]); // Nuevo estado para la lista de empleados
   const [loading, setLoading] = useState(true);
+  const [busquedaEmpleado, setBusquedaEmpleado] = useState('');
+  const [mostrarResultados, setMostrarResultados] = useState(false);
   
   // Estados para el Formulario (Modal)
   const [showForm, setShowForm] = useState(false);
@@ -47,8 +49,22 @@ export const UsuariosModulo: React.FC = () => {
       } else {
         await UsuariosService.create(dataToSave);
       }
+
+      /* LIMPIAR FORMULARIO */
+      setFormData({
+        id: null,
+        correo: '',
+        contrasena: '',
+        rol: '',
+        empleado_id: ''
+      });
+
+      /* LIMPIAR BUSCADOR */
+      setBusquedaEmpleado('');
+
       setShowForm(false);
-      cargarDatos(); // Recarga la tabla
+
+      cargarDatos();
     } catch (error: any) {
       // Extraemos el error real de la API
       console.error("Error completo:", error);
@@ -62,16 +78,34 @@ export const UsuariosModulo: React.FC = () => {
     }
   };
 
-  const handleEdit = (user: any) => {
-    setFormData({ 
-      id: user.id, 
-      correo: user.correo, 
+
+  const handleEdit = (u: any) => {
+
+    const empleadoEncontrado = empleados.find(
+      emp => emp.id === u.empleado_id
+    );
+
+
+    setFormData({
+      id: u.id,
+      correo: u.correo,
       contrasena: '', 
-      rol: user.rol, 
-      empleado_id: user.empleado_id || '' 
+      rol: u.rol,
+      empleado_id: u.empleado_id
     });
+
+    setBusquedaEmpleado(
+      empleadoEncontrado
+        ? `${empleadoEncontrado.nombres} ${empleadoEncontrado.apellidos}`
+        : ''
+    );
+
+    setMostrarResultados(false);
+
+
     setShowForm(true);
   };
+ 
 
   const handleDelete = async (id: number) => {
     if (window.confirm('¿Estás seguro de eliminar este usuario?')) {
@@ -136,42 +170,150 @@ export const UsuariosModulo: React.FC = () => {
             <h3 className="text-xl font-bold mb-4">{formData.id ? 'Editar Usuario' : 'Crear Usuario'}</h3>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-600 font-bold mb-1">Correo Electrónico</label>
-                <input required type="email" value={formData.correo} onChange={e => setFormData({...formData, correo: e.target.value})} className="w-full border p-2 rounded outline-none focus:border-gray-500" />
+                <label className="block text-sm text-gray-600 font-bold mb-1">
+                  Correo Electrónico
+                </label>
+
+                <input
+                  required
+                  type="email"
+                  value={formData.correo}
+                  onChange={e => setFormData({ ...formData, correo: e.target.value })}
+                  className="w-full border p-2 rounded outline-none focus:border-gray-500"
+                />
+
+                <p className="text-xs text-gray-400 mt-1">
+                  Ingrese un correo válido.
+                </p>
               </div>
+
               <div>
-                <label className="block text-sm text-gray-600 font-bold mb-1">{formData.id ? 'Nueva Contraseña (Opcional)' : 'Contraseña'}</label>
-                <input required={!formData.id} type="password" value={formData.contrasena} onChange={e => setFormData({...formData, contrasena: e.target.value})} className="w-full border p-2 rounded outline-none focus:border-gray-500" />
+                <label className="block text-sm text-gray-600 font-bold mb-1">
+                  {formData.id ? 'Nueva Contraseña (Opcional)' : 'Contraseña'}
+                </label>
+
+                <input
+                  required={!formData.id}
+                  type="password"
+                  value={formData.contrasena}
+                  onChange={e => setFormData({ ...formData, contrasena: e.target.value })}
+                  className="w-full border p-2 rounded outline-none focus:border-gray-500"
+                />
+
+                <p className="text-xs text-gray-400 mt-1">
+                  La contraseña debe contener al menos 8 caracteres.
+                </p>
               </div>
+
               <div>
-                <label className="block text-sm text-gray-600 font-bold mb-1">Rol en el Sistema</label>
-                <select value={formData.rol} onChange={e => setFormData({...formData, rol: e.target.value})} className="w-full border p-2 rounded bg-white outline-none focus:border-gray-500">
+                <label className="block text-sm text-gray-600 font-bold mb-1">
+                  Rol en el Sistema
+                </label>
+
+                <select
+                  value={formData.rol}
+                  onChange={e => setFormData({ ...formData, rol: e.target.value })}
+                  className="w-full border p-2 rounded bg-white outline-none focus:border-gray-500"
+                >
                   <option value="ADMIN">Administrador</option>
                   <option value="RRHH">Recursos Humanos</option>
                   <option value="EMPLEADO">Empleado</option>
                 </select>
+
+                <p className="text-xs text-gray-400 mt-1">
+                  Seleccione el nivel de permisos que tendrá el usuario.
+                </p>
               </div>
               
               {/* NUEVO SELECTOR DE EMPLEADOS POR NOMBRE */}
               <div>
-                <label className="block text-sm text-gray-600 font-bold mb-1">Asignar a Empleado (Opcional)</label>
-                <select 
-                  value={formData.empleado_id} 
-                  onChange={e => setFormData({...formData, empleado_id: e.target.value})} 
-                  className="w-full border p-2 rounded bg-white outline-none focus:border-gray-500"
-                >
-                  <option value="">-- Sin asignar --</option>
-                  {empleados.map(emp => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.nombres} {emp.apellidos} - DPI: {emp.dpi}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-xs text-gray-400 mt-1">Busca por nombre o DPI del empleado.</p>
+                <label className="block text-sm text-gray-600 font-bold mb-2">
+                  Asignar Empleado
+                </label>
+
+                {/* BUSCADOR */}
+                {formData.id ? (
+
+                  <div className="w-full border rounded bg-gray-100 px-4 py-2 text-gray-600">
+                    {busquedaEmpleado}
+                  </div>
+
+                ) : (
+
+                  <input
+                    type="text"
+                    placeholder="Buscar por nombre o DPI..."
+                    value={busquedaEmpleado}
+                    onChange={(e) => setBusquedaEmpleado(e.target.value)}
+                    onFocus={() => setMostrarResultados(true)}
+                    className="w-full border p-2 rounded outline-none focus:border-gray-500 mb-2"
+                  />
+
+                )}
+
+                {/* RESULTADOS */}
+                {mostrarResultados && busquedaEmpleado.trim() !== '' && (
+
+                  <div className="border rounded max-h-40 overflow-y-auto bg-white">
+
+                    {empleados
+                      .filter(emp =>
+                        `${emp.nombres} ${emp.apellidos} ${emp.dpi}`
+                          .toLowerCase()
+                          .includes(busquedaEmpleado.toLowerCase())
+                      )
+                      .map(emp => (
+
+                        <div
+                          key={emp.id}
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              empleado_id: emp.id
+                            });
+
+                            setBusquedaEmpleado(
+                              `${emp.nombres} ${emp.apellidos}`
+                            );
+                          }}
+                          className="p-2 hover:bg-gray-100 cursor-pointer border-b text-sm"
+                        >
+                          <p className="font-semibold">
+                            {emp.nombres} {emp.apellidos}
+                          </p>
+
+                          <p className="text-xs text-gray-500">
+                            DPI: {emp.dpi}
+                          </p>
+                        </div>
+
+                      ))}
+
+                  </div>
+
+                )}
+
+                <p className="text-xs text-gray-400 mt-1">
+                  Busque y seleccione un empleado registrado.
+                </p>
               </div>
               
               <div className="flex justify-end space-x-2 pt-4">
-                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded font-bold">Cancelar</button>
+                <button type="button" onClick={() => {
+
+                  setFormData({
+                    id: null,
+                    correo: '',
+                    contrasena: '',
+                    rol: '',
+                    empleado_id: ''
+                  });
+
+                  setBusquedaEmpleado('');
+
+                  setShowForm(false);
+
+                }} className="px-4 py-2 text-gray-500 hover:bg-gray-100 rounded font-bold">Cancelar</button>
                 <button type="submit" className="bg-[#a4ab9a] text-white px-4 py-2 rounded font-bold hover:bg-[#8e9485]">Guardar</button>
               </div>
             </form>

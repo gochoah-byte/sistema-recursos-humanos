@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { EmpleadosService } from '../../service/empleados.service';
 import { ModalEditarEmpleado } from './ModalEditarEmpleado';
+import { ModalDetalleEmpleado } from './ModalDetalleEmpleado';
+import { ModalDocumentosEmpleado } from './ModalDocumentosEmpleado';
 
 export const EmpleadosList: React.FC = () => {
   const [empleados, setEmpleados] = useState<any[]>([]);
@@ -9,6 +11,8 @@ export const EmpleadosList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<any>(null);
+  const [isDetalleOpen, setIsDetalleOpen] = useState(false);
+  const [isDocumentosOpen, setIsDocumentosOpen] = useState(false);
 
   useEffect(() => {
     cargarEmpleados();
@@ -96,13 +100,13 @@ export const EmpleadosList: React.FC = () => {
     : empleados.filter(e => e.estado === filtro);
 
   return (
-    <div className="max-w-5xl relative">
+    <div className="max-w-7xl mx-auto px-8 py-8">
 
       {/* Títulos y Botón Nuevo */}
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-5xl font-bold text-[#a4ab9a] mb-2 tracking-wide">Directorio</h1>
-          <h2 className="text-3xl font-medium text-gray-800">Gestión de Empleados</h2>
+          <h1 className="text-4xl font-bold text-[#a4ab9a] mb-2 tracking-wide">Directorio</h1>
+          <h2 className="text-2xl font-medium text-gray-800">Gestión de Empleados</h2>
         </div>
         {/* 3. MODIFICADO: Agregamos el onClick al botón */}
         <button 
@@ -210,9 +214,30 @@ export const EmpleadosList: React.FC = () => {
                       Q{Number(emp.salario_base).toLocaleString('es-GT', { minimumFractionDigits: 2 })}
                     </div>
                     <div className="col-span-1 flex justify-center gap-4 text-xl">
-                      <button title="Ver Detalle" className="text-gray-400 hover:text-[#a4ab9a] transition">👁️</button>
+                      <button
+                        title="Ver Detalle"
+                        onClick={() => {
+                          setEmpleadoSeleccionado(emp);
+                          setIsDetalleOpen(true);
+                        }}
+                        className="text-gray-400 hover:text-[#a4ab9a] transition"
+                      >
+                        👁️
+                      </button>
+
                       <button title="Editar" onClick={() => { setEmpleadoSeleccionado(emp); setIsModalOpen(true); }} className="text-gray-400 hover:text-[#d7bda8] transition"> ✏️</button>
-                      <button title="Gestionar Documentos" className="text-gray-400 hover:text-[#a4ab9a] transition">📄</button>
+                      
+                      <button
+                        title="Documentos"
+                        onClick={() => {
+                          setEmpleadoSeleccionado(emp);
+                          setIsDocumentosOpen(true);
+                        }}
+                        className="text-gray-400 hover:text-[#a4ab9a] transition"
+                      >
+                        📄
+                      </button>
+
                     </div>
                   </div>
                 ))
@@ -229,6 +254,19 @@ export const EmpleadosList: React.FC = () => {
           onClose={() => setIsModalOpen(false)}
           empleado={empleadoSeleccionado}
           onSave={handleSaveEmpleado}
+        />
+      )}
+      {isDetalleOpen && (
+        <ModalDetalleEmpleado
+          empleado={empleadoSeleccionado}
+          onClose={() => setIsDetalleOpen(false)}
+        />
+      )}
+
+      {isDocumentosOpen && (
+        <ModalDocumentosEmpleado
+          empleado={empleadoSeleccionado}
+          onClose={() => setIsDocumentosOpen(false)}
         />
       )}
     </div>
