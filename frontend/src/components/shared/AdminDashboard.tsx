@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-// IMPORTACIONES DE TUS COMPONENTES YA EXISTENTES Y SERVICIOS
+
+// IMPORTACIONES DE TUS COMPONENTES Y SERVICIOS
 import { EmpleadosList } from '../empleados/EmpleadosList';
-import { UsuariosModulo } from './UsuariosModulo'; // El que hicimos en el mensaje anterior
+import { UsuariosModulo } from './UsuariosModulo';
+import { Documentos } from '../documentos/Documentos';
+
 import { NominaService } from '../../service/nomina.service';
 import { AuditoriaService } from '../../service/auditoria.service';
 import { EmpleadosService } from '../../service/empleados.service';
+
 
 // ==========================================
 // COMPONENTE INTERNO: Módulo de Nómina (Funcional)
@@ -186,6 +190,38 @@ export const AdminDashboard: React.FC = () => {
           <EmpleadosList />
         </div>
       </section>
+
+      {/* GESTIÓN DE DOCUMENTOS */}
+
+<section className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+
+  <div className="bg-[#a4ab9a] text-white px-6 py-4 flex items-center justify-between">
+
+    <div className="flex items-center">
+
+      <span className="text-2xl mr-3">
+        📁
+      </span>
+
+      <h2 className="text-xl font-bold">
+        Gestión de Documentos
+      </h2>
+
+    </div>
+
+    <span className="text-xs bg-[#8e9485] px-3 py-1 rounded-full">
+      Expedientes Digitales
+    </span>
+
+  </div>
+
+  <div className="p-6 bg-white">
+
+    <Documentos />
+
+  </div>
+
+</section>
 
       {/* 3. DEPARTAMENTOS Y PUESTOS (Funcional extraído de la BD) */}
       <div className="grid grid-cols-2 gap-6">
