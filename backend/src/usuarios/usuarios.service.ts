@@ -45,7 +45,19 @@ export class UsuariosService {
 
   async findAll() {
     const lista = await this.prisma.usuarios.findMany({
-      include: { empleados: { select: { nombres: true, apellidos: true } } }
+      select: {
+        id: true,
+        correo: true,
+        rol: true,
+        empleado_id: true,
+
+        empleados: {
+          select: {
+            nombres: true,
+            apellidos: true
+          }
+        }
+      }
     });
 
     if (lista.length === 0) {
@@ -54,6 +66,7 @@ export class UsuariosService {
         data: []
       };
     }
+
     return lista;
   }
 
@@ -96,19 +109,31 @@ export class UsuariosService {
 
   async findOne(id: number) {
     const usuarioId = Number(id);
+
     if (isNaN(usuarioId) || usuarioId === 0) return null;
 
     const usuario = await this.prisma.usuarios.findUnique({
       where: { id: usuarioId },
-      include: {
+
+      select: {
+        id: true,
+        correo: true,
+        rol: true,
+        empleado_id: true,
+
         empleados: {
-          select: { nombres: true, apellidos: true }
+          select: {
+            nombres: true,
+            apellidos: true
+          }
         }
       }
     });
 
     if (!usuario) {
-      throw new NotFoundException(`El usuario con ID ${id} no existe en la base de datos`);
+      throw new NotFoundException(
+        `El usuario con ID ${id} no existe en la base de datos`
+      );
     }
 
     return usuario;

@@ -18,8 +18,8 @@ export class EmpleadosService {
           direccion: createEmpleadoDto.direccion,
           telefono: createEmpleadoDto.telefono,
           salario_base: createEmpleadoDto.salario_base,
-          puesto: createEmpleadoDto.puesto,
-          departamento: createEmpleadoDto.departamento,
+          puesto_id: createEmpleadoDto.puesto_id,
+          departamento_id: createEmpleadoDto.departamento_id,
           estado: createEmpleadoDto.estado,
         },
       });
@@ -39,8 +39,14 @@ export class EmpleadosService {
     const whereClause = estado && estado !== 'TODOS' ? { estado } : {};
     const lista = await this.prisma.empleados.findMany({
       where: whereClause,
+
+      include: {
+        puestos: true,
+        departamentos: true
+      },
+
       orderBy: {
-        salario_base: 'desc' 
+        salario_base: 'desc'
       }
     });
     if (lista.length === 0) {
@@ -62,6 +68,11 @@ export class EmpleadosService {
 
     const empleado = await this.prisma.empleados.findUnique({
       where: { id: empleadoId },
+
+      include: {
+        puestos: true,
+        departamentos: true
+      }
     });
 
     if (!empleado) {
@@ -88,8 +99,26 @@ export class EmpleadosService {
     }
 
     return this.prisma.empleados.update({
-      where: { id: empleadoId }, // CORRECCIÓN
-      data: updateEmpleadoDto,
+      where: { id: empleadoId },
+
+      data: {
+        dpi: updateEmpleadoDto.dpi,
+        nombres: updateEmpleadoDto.nombres,
+        apellidos: updateEmpleadoDto.apellidos,
+
+        fecha_nacimiento: updateEmpleadoDto.fecha_nacimiento,
+
+        direccion: updateEmpleadoDto.direccion,
+        telefono: updateEmpleadoDto.telefono,
+
+        salario_base: updateEmpleadoDto.salario_base,
+
+        puesto_id: updateEmpleadoDto.puesto_id,
+
+        departamento_id: updateEmpleadoDto.departamento_id,
+
+        estado: updateEmpleadoDto.estado
+      },
     });
   }
 

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDateString, Matches, MaxLength, MinLength, Min, ValidateIf } from 'class-validator';
+import { IsNotEmpty, IsString, IsNumber, IsOptional, IsDateString, Matches, MaxLength, MinLength, Min, MaxDate, ValidateIf } from 'class-validator';
 
 export class CreateEmpleadoDto {
     @ApiProperty({ example: '1234567890101' })
@@ -25,18 +25,21 @@ export class CreateEmpleadoDto {
     @Matches(/^[a-zA-ZÁÉÍÓÚáéíóúñÑ\s]+$/, {message: 'Los apellidos solo pueden contener letras'})
     apellidos!: string;
 
-    @ApiProperty({ example: '2026-01-01', required: false })
-    @IsOptional()
-    @IsDateString({}, {message: 'La fecha de nacimiento debe tener formato YYYY-MM-DD'})
-    fecha_nacimiento?: string;
+    @ApiProperty({ example: '2000-01-01' })
+    @IsNotEmpty({
+        message: 'La fecha de nacimiento es obligatoria'
+    })
+    @IsDateString({}, {
+        message: 'La fecha de nacimiento debe tener formato YYYY-MM-DD'
+    })
+    fecha_nacimiento!: string;
 
-    @ApiProperty({ example: 'Chiquimulilla, Santa Rosa', required: false })
-    @IsOptional()
-    @ValidateIf((_, value) => value !== '')
+    @ApiProperty({ example: 'Chiquimulilla, Santa Rosa' })
+    @IsNotEmpty({message: 'La dirección es obligatoria'})
     @IsString({message: 'La dirección debe ser texto'})
     @MinLength(5, {message: 'La dirección debe tener al menos 5 caracteres'})
-    @MaxLength(100, {message: 'La dirección no puede exceder 100 caracteres'})
-    direccion?: string;
+    @MaxLength(100, { message: 'La dirección no puede exceder 100 caracteres'})
+    direccion!: string;
 
     @ApiProperty({ example: '5535-4912', required: false })
     @IsOptional()
@@ -49,21 +52,21 @@ export class CreateEmpleadoDto {
     @Min(1, {message: 'El salario debe ser mayor a 0' })
     salario_base!: number;
 
-    @ApiProperty({ example: 'Desarrollador', required: false })
+    @ApiProperty({ example: 1, required: false })
     @IsOptional()
-    @IsString({message: 'El puesto debe ser texto'})
-    @MinLength(3, {message: 'El puesto debe tener al menos 3 caracteres'})
-    @MaxLength(50, {
-        message: 'El puesto no puede exceder 50 caracteres'
-    })
-    puesto?: string;
+    @IsNumber(
+        {},
+        { message: 'El puesto debe ser numérico' }
+    )
+    puesto_id?: number;
 
-    @ApiProperty({ example: 'IT', required: false })
+    @ApiProperty({ example: 1, required: false })
     @IsOptional()
-    @IsString({message: 'El departamento debe ser texto'})
-    @MinLength(2, {message: 'El departamento debe tener al menos 2 caracteres'})
-    @MaxLength(50, {message: 'El departamento no puede exceder 50 caracteres'})
-    departamento?: string;
+    @IsNumber(
+        {},
+        { message: 'El departamento debe ser numérico' }
+    )
+    departamento_id?: number;
 
     @ApiProperty({ example: 'ACTIVO' })
     @IsNotEmpty()

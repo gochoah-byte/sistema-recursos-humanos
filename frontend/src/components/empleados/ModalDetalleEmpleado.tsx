@@ -53,7 +53,7 @@ export const ModalDetalleEmpleado: React.FC<Props> = ({
                             </h3>
 
                             <p className="text-gray-500">
-                                {empleado.puesto}
+                                {empleado.puestos?.nombre || 'Sin puesto'}
                             </p>
 
                             <span className={`
@@ -87,11 +87,27 @@ export const ModalDetalleEmpleado: React.FC<Props> = ({
                             </p>
 
                             <p className="font-bold text-gray-800">
-                                {new Date(empleado.fecha_nacimiento).toLocaleDateString('es-GT', {
-                                    day: '2-digit',
-                                    month: 'long',
-                                    year: 'numeric'
-                                })}
+                                {
+                                    empleado.fecha_nacimiento
+                                        ? (() => {
+
+                                            const fecha = empleado.fecha_nacimiento
+                                                .split('T')[0];
+
+                                            const [anio, mes, dia] =
+                                                fecha.split('-');
+
+                                            return `${dia} de ${new Date(
+                                                Number(anio),
+                                                Number(mes) - 1,
+                                                Number(dia)
+                                            ).toLocaleString('es-GT', {
+                                                month: 'long'
+                                            })} de ${anio}`;
+
+                                        })()
+                                        : 'No registrada'
+                                }
                             </p>
                         </div>
 
@@ -111,7 +127,7 @@ export const ModalDetalleEmpleado: React.FC<Props> = ({
                             </p>
 
                             <p className="font-bold text-gray-800">
-                                {empleado.departamento}
+                                {empleado.departamentos?.nombre || 'Sin departamento'}
                             </p>
                         </div>
 

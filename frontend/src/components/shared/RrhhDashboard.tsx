@@ -4,47 +4,62 @@ import { DocumentosService } from '../../service/documentos.service';
 
 // IMPORTAMOS EL COMPONENTE DE EMPLEADOS QUE YA FUNCIONA
 import { EmpleadosList } from '../empleados/EmpleadosList';
+import { DepartamentosList } from '../departamento/DepartamentoList';
+import { PuestosList } from '../puesto/PuestoList';
 
-// Importa los demás cuando los vayas creando:
-// import { AsistenciaModulo } from '../asistencia/AsistenciaModulo';
-// import { NominaModulo } from '../nomina/NominaModulo';
 
 export const RrhhDashboard: React.FC = () => {
-  // Estado para controlar qué módulo del menú estamos viendo
   const [activeMenu, setActiveMenu] = useState('DASHBOARD');
   
   const [metrics, setMetrics] = useState({ activos: 0, documentos: 0 });
   const [loading, setLoading] = useState(true);
+  
 
   useEffect(() => {
+
     const fetchRrhhData = async () => {
+
       try {
+
         const [emp, docs] = await Promise.all([
-          EmpleadosService.getAll(),          
-          DocumentosService.getAll()        
+          EmpleadosService.getAll(),
+          DocumentosService.getAll()
         ]);
 
         setMetrics({
-          activos: emp.filter((e: any) => e.estado === 'ACTIVO').length,
+          activos: emp.filter(
+            (e: any) => e.estado === 'ACTIVO'
+          ).length,
+
           documentos: docs.length || 0
         });
+
       } catch (error) {
-        console.error("Error cargando panel de RRHH:", error);
+
+        console.error(
+          "Error cargando panel de RRHH:",
+          error
+        );
+
       } finally {
+
         setLoading(false);
+
       }
     };
+
     fetchRrhhData();
+
   }, []);
 
   // Definición exacta del Menú que solicitaste
   const menuItems = [
     { id: 'DASHBOARD', label: 'Dashboard', icon: '📊' },
     { id: 'EMPLEADOS', label: 'Empleados', icon: '👥' },
-    { id: 'ASISTENCIA', label: 'Asistencia', icon: '⏰' },
+    { id: 'DEPARTAMENTOS', label: 'Departamentos', icon: '🏢' },
+    { id: 'PUESTOS', label: 'Puestos', icon: '💼' },
     { id: 'VACACIONES', label: 'Vacaciones', icon: '🌴' },
     { id: 'PERMISOS', label: 'Permisos', icon: '📝' },
-    { id: 'CONTRATOS', label: 'Contratos', icon: '🤝' },
     { id: 'NOMINA', label: 'Nómina', icon: '💰' },
     { id: 'PLANILLA', label: 'Planilla', icon: '📑' },
     { id: 'REPORTES', label: 'Reportes', icon: '📈' },
@@ -112,9 +127,9 @@ export const RrhhDashboard: React.FC = () => {
                 <span className="text-4xl mb-2">💰</span>
                 <span className="font-bold text-gray-700">Gestionar Salarios y Bonos</span>
               </button>
-              <button onClick={() => setActiveMenu('ASISTENCIA')} className="bg-blue-50 p-6 rounded-xl flex flex-col items-center justify-center hover:bg-blue-100 transition shadow-sm border border-blue-200">
-                <span className="text-4xl mb-2">⏰</span>
-                <span className="font-bold text-blue-800">Control de Asistencia</span>
+              <button onClick={() => setActiveMenu('DEPARTAMENTOS')} className="bg-blue-50 p-6 rounded-xl flex flex-col items-center justify-center hover:bg-blue-100 transition shadow-sm border border-blue-200">
+                <span className="text-4xl mb-2">🏢</span>
+                <span className="font-bold text-blue-800">Gestionar Departamentos</span>
               </button>
               <button onClick={() => setActiveMenu('PLANILLA')} className="bg-gray-800 p-6 rounded-xl flex flex-col items-center justify-center hover:bg-gray-700 transition shadow-sm">
                 <span className="text-4xl mb-2">📑</span>
@@ -126,19 +141,25 @@ export const RrhhDashboard: React.FC = () => {
 
         {/* VISTA 2: EMPLEADOS (CORREGIDA) */}
         {activeMenu === 'EMPLEADOS' && (
-          // CORRECCIÓN: Le quitamos el fondo blanco y padding extra, ya que EmpleadosList trae el suyo.
+
           <div className="w-full">
-            <EmpleadosList />
+
+            <EmpleadosList
+            />
+
           </div>
+
         )}
 
-        {/* VISTA 3: ASISTENCIA */}
-        {activeMenu === 'ASISTENCIA' && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center">
-            <h2 className="text-2xl font-bold text-blue-600 mb-4">Módulo de Asistencia</h2>
-            <p className="text-gray-500">Aquí podrás ver las marcaciones diarias de los empleados, entradas, salidas y calcular horas extras.</p>
-          </div>
+        {/* VISTA 3: DEPARTAMENTOS */}
+        {activeMenu === 'DEPARTAMENTOS' && (
+          <DepartamentosList />
         )}
+
+        {activeMenu === 'PUESTOS' && (
+          <PuestosList />
+        )}
+
 
         {/* VISTA 4: VACACIONES Y PERMISOS */}
         {(activeMenu === 'VACACIONES' || activeMenu === 'PERMISOS') && (

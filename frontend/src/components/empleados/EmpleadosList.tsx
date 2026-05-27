@@ -3,6 +3,8 @@ import { EmpleadosService } from '../../service/empleados.service';
 import { ModalEditarEmpleado } from './ModalEditarEmpleado';
 import { ModalDetalleEmpleado } from './ModalDetalleEmpleado';
 import { ModalDocumentosEmpleado } from './ModalDocumentosEmpleado';
+import { PuestosService } from '../../service/puestos.service';
+import { DepartamentosService } from '../../service/departamentos.service';
 
 export const EmpleadosList: React.FC = () => {
   const [empleados, setEmpleados] = useState<any[]>([]);
@@ -13,25 +15,60 @@ export const EmpleadosList: React.FC = () => {
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState<any>(null);
   const [isDetalleOpen, setIsDetalleOpen] = useState(false);
   const [isDocumentosOpen, setIsDocumentosOpen] = useState(false);
+  
+  const [puestos, setPuestos] = useState<any[]>([]);
+
+  const [departamentos, setDepartamentos] = useState<any[]>([]);
+
 
   useEffect(() => {
+
     cargarEmpleados();
+
   }, []);
 
+
   const cargarEmpleados = async () => {
-    setLoading(true); 
+
+    setLoading(true);
     setError(null);
+
     try {
-      const data = await EmpleadosService.getAll();
+
+      const data =
+        await EmpleadosService.getAll();
+
       setEmpleados(data);
+
+      const puestosDB =
+        await PuestosService.getAll();
+
+      const departamentosDB =
+        await DepartamentosService.getAll();
+
+      setPuestos(puestosDB);
+
+      setDepartamentos(departamentosDB);
+
     } catch (error) {
-      console.error('Error cargando empleados:', error);
-      setError('No se pudo establecer conexión con el servidor.'); 
+
+      console.error(
+        'Error cargando empleados:',
+        error
+      );
+
+      setError(
+        'No se pudo establecer conexión con el servidor.'
+      );
+
     } finally {
+
       setLoading(false);
+
     }
   };
 
+  
   // 1. NUEVA FUNCIÓN: Prepara un empleado en blanco para el modal
   const handleNuevoEmpleado = () => {
     setEmpleadoSeleccionado({
@@ -42,8 +79,8 @@ export const EmpleadosList: React.FC = () => {
       fecha_nacimiento: '',
       direccion: '',
       telefono: '',
-      puesto: '',
-      departamento: '',
+      puesto_id: '',
+      departamento_id: '',
       estado: 'ACTIVO',
       salario_base: 0
     });
@@ -61,8 +98,8 @@ export const EmpleadosList: React.FC = () => {
         fecha_nacimiento: datosActualizados.fecha_nacimiento || null, // Evitar mandar strings vacíos en fechas
         direccion: datosActualizados.direccion,
         telefono: datosActualizados.telefono,
-        puesto: datosActualizados.puesto,
-        departamento: datosActualizados.departamento,
+        puesto_id: datosActualizados.puesto_id,
+        departamento_id: datosActualizados.departamento_id,
         estado: datosActualizados.estado,
         salario_base: Number(datosActualizados.salario_base) 
       };
@@ -207,8 +244,13 @@ export const EmpleadosList: React.FC = () => {
                       <span className="font-bold text-gray-700">{emp.nombres} {emp.apellidos}</span>
                     </div>
                     <div className="col-span-1 flex flex-col">
-                      <span className="text-gray-700 font-medium">{emp.puesto || 'N/A'}</span>
-                      <span className="text-xs text-gray-500">{emp.departamento || 'Sin Depto.'}</span>
+                      <span className="text-gray-700 font-medium">
+                        {emp.puestos?.nombre || 'N/A'}
+                      </span>
+
+                      <span className="text-xs text-gray-500">
+                        {emp.departamentos?.nombre || 'Sin Depto.'}
+                      </span>
                     </div>
                     <div className="col-span-1 text-right font-bold text-[#a4ab9a]">
                       Q{Number(emp.salario_base).toLocaleString('es-GT', { minimumFractionDigits: 2 })}
@@ -269,6 +311,15 @@ export const EmpleadosList: React.FC = () => {
           onClose={() => setIsDocumentosOpen(false)}
         />
       )}
+
+      <ModalEditarEmpleado
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        empleado={empleadoSeleccionado}
+        onSave={handleSaveEmpleado}
+        puestos={puestos}
+        departamentos={departamentos}
+      />
     </div>
   );
 };

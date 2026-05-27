@@ -9,6 +9,7 @@ export const UsuariosModulo: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [busquedaEmpleado, setBusquedaEmpleado] = useState('');
   const [mostrarResultados, setMostrarResultados] = useState(false);
+  const [cambiarPassword, setCambiarPassword] = useState(false);
   
   // Estados para el Formulario (Modal)
   const [showForm, setShowForm] = useState(false);
@@ -39,10 +40,20 @@ export const UsuariosModulo: React.FC = () => {
     e.preventDefault();
     try {
       // Aseguramos que el empleado_id se mande como nulo si está vacío
-      const dataToSave = {
+      const dataToSave: any = {
         ...formData,
-        empleado_id: formData.empleado_id === '' ? null : Number(formData.empleado_id)
+
+        empleado_id:
+          formData.empleado_id === ''
+            ? null
+            : Number(formData.empleado_id)
       };
+
+      /* SI ESTÁ EDITANDO Y NO QUIERE CAMBIAR PASSWORD */
+      /* NO ENVIAR CONTRASEÑA */
+      if (formData.id && !cambiarPassword) {
+        delete dataToSave.contrasena;
+      }
 
       if (formData.id) {
         await UsuariosService.update(formData.id, dataToSave);
@@ -66,14 +77,28 @@ export const UsuariosModulo: React.FC = () => {
 
       cargarDatos();
     } catch (error: any) {
-      // Extraemos el error real de la API
+
       console.error("Error completo:", error);
-      
-      const mensajeError = error.response?.data?.message 
-        || error.response?.data?.error 
-        || error.message 
-        || "Error desconocido al guardar";
-        
+
+      const mensajes = error.response?.data?.message;
+
+      // VALIDACIÓN PERSONALIZADA
+      if (
+        Array.isArray(mensajes) &&
+        mensajes.includes('Debe seleccionar un empleado')
+      ) {
+        alert('Debe seleccionar un empleado');
+        return;
+      }
+
+      // OTROS ERRORES
+      const mensajeError =
+        Array.isArray(mensajes)
+          ? mensajes.join(', ')
+          : error.response?.data?.error
+          || error.message
+          || "Error desconocido al guardar";
+
       alert("No se pudo guardar: " + mensajeError);
     }
   };
@@ -101,6 +126,7 @@ export const UsuariosModulo: React.FC = () => {
     );
 
     setMostrarResultados(false);
+    setCambiarPassword(false);
 
 
     setShowForm(true);
@@ -126,7 +152,22 @@ export const UsuariosModulo: React.FC = () => {
       <div className="flex justify-between items-center mb-4">
         <p className="text-gray-500">Lista de usuarios registrados en el sistema.</p>
         <button 
-          onClick={() => { setFormData({ id: null, correo: '', contrasena: '', rol: 'EMPLEADO', empleado_id: '' }); setShowForm(true); }}
+          onClick={() => {
+
+            /* MODO CREAR */
+            setFormData({
+              id: null,
+              correo: '',
+              contrasena: '',
+              rol: 'EMPLEADO',
+              empleado_id: ''
+            });
+
+            /* AL CREAR SIEMPRE SE PUEDE ESCRIBIR PASSWORD */
+            setCambiarPassword(true);
+
+            setShowForm(true);
+          }}
           className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 font-bold"
         >
           + Nuevo Usuario
@@ -192,12 +233,35 @@ export const UsuariosModulo: React.FC = () => {
                   {formData.id ? 'Nueva Contraseña (Opcional)' : 'Contraseña'}
                 </label>
 
+                {/* SOLO MOSTRAR CHECKBOX EN EDITAR */}
+                {formData.id && (
+                  <div className="flex items-center gap-2 mb-2">
+
+                    <input
+                      type="checkbox"
+                      checked={cambiarPassword}
+                      onChange={(e) => setCambiarPassword(e.target.checked)}
+                    />
+
+                    <label className="text-sm text-gray-600">
+                      Cambiar contraseña
+                    </label>
+
+                  </div>
+                )}
+
                 <input
                   required={!formData.id}
+                  disabled={!!formData.id && !cambiarPassword}
                   type="password"
                   value={formData.contrasena}
-                  onChange={e => setFormData({ ...formData, contrasena: e.target.value })}
-                  className="w-full border p-2 rounded outline-none focus:border-gray-500"
+                  onChange={e =>
+                    setFormData({
+                      ...formData,
+                      contrasena: e.target.value
+                    })
+                  }
+                  className="w-full border p-2 rounded outline-none focus:border-gray-500 disabled:bg-gray-100"
                 />
 
                 <p className="text-xs text-gray-400 mt-1">
