@@ -35,9 +35,39 @@ export class DocumentosController {
     @Body() body: any
   ) {
     if (!file) {
-      throw new BadRequestException('No se ha seleccionado ningún archivo');
-    }
+  throw new BadRequestException('No se ha seleccionado ningún archivo');
+}
 
+
+// VALIDAR TIPO ARCHIVO
+
+const tiposPermitidos = [
+  'application/pdf',
+  'image/png',
+  'image/jpeg',
+  'image/jpg'
+];
+
+if (
+  !tiposPermitidos.includes(file.mimetype)
+) {
+
+  throw new BadRequestException(
+    'Solo se permiten archivos PDF, PNG y JPG'
+  );
+}
+
+
+// VALIDAR TAMAÑO
+
+const maxSize = 5 * 1024 * 1024;
+
+if (file.size > maxSize) {
+
+  throw new BadRequestException(
+    'El archivo supera el límite de 5MB'
+  );
+}
     // Convertimos a número porque en multipart/form-data llegan como strings
     const metadata = {
       nombre_archivo: file.originalname,
