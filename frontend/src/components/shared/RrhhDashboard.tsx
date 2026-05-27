@@ -7,7 +7,7 @@ import { EmpleadosList } from '../empleados/EmpleadosList';
 
 // Importa los demás cuando los vayas creando:
 // import { AsistenciaModulo } from '../asistencia/AsistenciaModulo';
-// import { NominaModulo } from '../nomina/NominaModulo';
+import { NominaModulo } from '../nomina/NominaModulo';
 
 export const RrhhDashboard: React.FC = () => {
   // Estado para controlar qué módulo del menú estamos viendo
@@ -150,10 +150,7 @@ export const RrhhDashboard: React.FC = () => {
 
         {/* VISTA 5: NÓMINA (Sueldos, Bonos, Descuentos) */}
         {activeMenu === 'NOMINA' && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center">
-            <h2 className="text-2xl font-bold text-orange-600 mb-4">Configuración de Nómina</h2>
-            <p className="text-gray-500">En este módulo registrarás bonificaciones, incentivos y aplicarás descuentos antes de generar la planilla final.</p>
-          </div>
+          <NominaModulo />
         )}
 
         {/* VISTA 6: PLANILLA Y BOLETAS */}
