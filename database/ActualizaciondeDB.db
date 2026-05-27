@@ -1,0 +1,78 @@
+-- =========================================
+-- 1. CREAR TABLA DEPARTAMENTOS
+-- =========================================
+CREATE TABLE departamentos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) UNIQUE NOT NULL,
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =========================================
+-- 2. CREAR TABLA PUESTOS
+-- =========================================
+CREATE TABLE puestos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) UNIQUE NOT NULL,
+    creado_en TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- =========================================
+-- 3. INSERTAR DEPARTAMENTOS EXISTENTES
+-- =========================================
+INSERT INTO departamentos (nombre)
+SELECT DISTINCT departamento
+FROM empleados
+WHERE departamento IS NOT NULL
+AND departamento <> '';
+
+-- =========================================
+-- 4. INSERTAR PUESTOS EXISTENTES
+-- =========================================
+INSERT INTO puestos (nombre)
+SELECT DISTINCT puesto
+FROM empleados
+WHERE puesto IS NOT NULL
+AND puesto <> '';
+
+-- =========================================
+-- 5. AGREGAR COLUMNAS NUEVAS
+-- =========================================
+ALTER TABLE empleados
+ADD COLUMN puesto_id INT;
+
+ALTER TABLE empleados
+ADD COLUMN departamento_id INT;
+
+-- =========================================
+-- 6. RELACIONAR PUESTOS
+-- =========================================
+UPDATE empleados e
+SET puesto_id = p.id
+FROM puestos p
+WHERE e.puesto = p.nombre;
+
+-- =========================================
+-- 7. RELACIONAR DEPARTAMENTOS
+-- =========================================
+UPDATE empleados e
+SET departamento_id = d.id
+FROM departamentos d
+WHERE e.departamento = d.nombre;
+
+-- =========================================
+-- 8. AGREGAR FOREIGN KEYS
+-- =========================================
+ALTER TABLE empleados
+ADD CONSTRAINT fk_empleado_puesto
+FOREIGN KEY (puesto_id)
+REFERENCES puestos(id)
+ON DELETE SET NULL;
+
+ALTER TABLE empleados
+ADD CONSTRAINT fk_empleado_departamento
+FOREIGN KEY (departamento_id)
+REFERENCES departamentos(id)
+ON DELETE SET NULL;
+
+
+-- Este Script es por si la base de datos ya existe, solo seria de modificarla

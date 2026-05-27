@@ -72,7 +72,9 @@ export class CreateUsuarioDto {
         required: false,
         description: 'ID del empleado asociado'
     })
-    @IsOptional()
+    @IsNotEmpty({
+        message: 'Debe seleccionar un empleado'
+    })
     @Type(() => Number)
     @IsInt({
         message: 'El empleado_id debe ser un número entero'

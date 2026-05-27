@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 
 // IMPORTACIONES DE TUS COMPONENTES Y SERVICIOS
 import { EmpleadosList } from '../empleados/EmpleadosList';
+import { ModalPuesto} from '../puesto/ModalPuesto';
+import { ModalDepartamento } from '../departamento/ModalDepartamento';
 import { UsuariosModulo } from './UsuariosModulo';
 import { Documentos } from '../documentos/Documentos';
-
 import { NominaService } from '../../service/nomina.service';
 import { AuditoriaService } from '../../service/auditoria.service';
-import { EmpleadosService } from '../../service/empleados.service';
+import { PuestosService } from '../../service/puestos.service';
+import { DepartamentosService } from '../../service/departamentos.service';
 
 
 // ==========================================
@@ -16,6 +18,8 @@ import { EmpleadosService } from '../../service/empleados.service';
 const ModuloNomina: React.FC = () => {
   const [periodos, setPeriodos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  
 
   useEffect(() => {
     const fetchPeriodos = async () => {
@@ -135,24 +139,87 @@ const ModuloAuditoria: React.FC = () => {
 // ==========================================
 export const AdminDashboard: React.FC = () => {
   // Estado para los departamentos (Extraído de los empleados reales)
-  const [departamentos, setDepartamentos] = useState<string[]>([]);
-  const [puestos, setPuestos] = useState<string[]>([]);
+  const [puestos, setPuestos] = useState<any[]>([]);
+  const [departamentos, setDepartamentos] = useState<any[]>([]);
+  const [showDepartamentoModal, setShowDepartamentoModal] = useState(false);
+  const [showPuestoModal, setShowPuestoModal] = useState(false);
 
+ 
   useEffect(() => {
-    // Para no crear tablas extra, sacamos los deptos y puestos únicos de los empleados existentes
-    const extraerDatosDinamicos = async () => {
+
+    const cargarDatos = async () => {
+
       try {
-        const emp = await EmpleadosService.getAll();
-        const deptosUnicos = Array.from(new Set(emp.map((e: any) => e.departamento).filter(Boolean)));
-        const puestosUnicos = Array.from(new Set(emp.map((e: any) => e.puesto).filter(Boolean)));
-        setDepartamentos(deptosUnicos as string[]);
-        setPuestos(puestosUnicos as string[]);
+
+        const puestosDB =
+          await PuestosService.getAll();
+
+        const departamentosDB =
+          await DepartamentosService.getAll();
+
+        setPuestos(puestosDB);
+
+        setDepartamentos(departamentosDB);
+
       } catch (error) {
+
         console.error(error);
+
       }
     };
-    extraerDatosDinamicos();
+
+    cargarDatos();
+
   }, []);
+
+  const handleGuardarPuesto = async (nombre: string) => {
+
+    try {
+
+      // CREAR
+      await PuestosService.create({
+        nombre
+      });
+
+      // RECARGAR DESDE BD
+      const puestosDB =
+        await PuestosService.getAll();
+
+      setPuestos(puestosDB);
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert('Error al guardar puesto');
+
+    }
+  };
+
+  const handleGuardarDepartamento = async (nombre: string) => {
+
+    try {
+
+      await DepartamentosService.create({
+        nombre
+      });
+
+      const departamentosDB =
+        await DepartamentosService.getAll();
+
+      setDepartamentos(departamentosDB);
+
+    } catch (error) {
+
+      console.error(error);
+
+      alert('Error al guardar departamento');
+
+    }
+  };
+  
+  console.log('ADMIN PUESTOS:', puestos);
+  console.log('ADMIN DEPARTAMENTOS:', departamentos);
 
   return (
     <div className="max-w-7xl mx-auto pb-20 space-y-12 animate-fade-in">
@@ -170,7 +237,7 @@ export const AdminDashboard: React.FC = () => {
             <span className="text-2xl mr-3">🔐</span>
             <h2 className="text-xl font-bold">Gestión de Usuarios</h2>
           </div>
-          <span className="text-xs bg-gray-600 px-3 py-1 rounded-full">Crear, Editar, Eliminar, Roles</span>
+          <span className="text-xs bg-gray-600 px-3 py-1 rounded-full">Ver todos los Usuarios</span>
         </div>
         <div className="p-6 bg-white">
           <UsuariosModulo />
@@ -184,10 +251,11 @@ export const AdminDashboard: React.FC = () => {
             <span className="text-2xl mr-3">👥</span>
             <h2 className="text-xl font-bold">Gestión de Empleados</h2>
           </div>
-          <span className="text-xs bg-[#8e9485] px-3 py-1 rounded-full">Ver todos los empleados</span>
+          <span className="text-xs bg-[#8e9485] px-3 py-1 rounded-full">Ver todos los Empleados</span>
         </div>
         <div className="p-6">
-          <EmpleadosList />
+          <EmpleadosList
+          />
         </div>
       </section>
 
@@ -226,33 +294,122 @@ export const AdminDashboard: React.FC = () => {
       {/* 3. DEPARTAMENTOS Y PUESTOS (Funcional extraído de la BD) */}
       <div className="grid grid-cols-2 gap-6">
         <section className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+
+          {/* HEADER */}
           <div className="bg-blue-500 text-white px-6 py-4 flex items-center">
             <span className="text-2xl mr-3">🏢</span>
-            <h2 className="text-xl font-bold">Departamentos Activos</h2>
+
+            <h2 className="text-xl font-bold">
+              Departamentos Activos
+            </h2>
           </div>
+
+          {/* TEXTO + BOTÓN */}
+          <div className="px-6 pt-4 flex items-center justify-between">
+
+            <p className="text-gray-500 text-sm">
+              Departamentos activos registrados en el sistema.
+            </p>
+
+            <button
+              onClick={() => setShowDepartamentoModal(true)}
+              className="text-xs bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded-full transition font-medium"
+            >
+              + Nuevo Departamento
+            </button>
+
+          </div>
+
+          {/* LISTA */}
           <div className="p-6 bg-white max-h-48 overflow-y-auto">
+
             <ul className="divide-y">
-              {departamentos.map((d, i) => (
-                <li key={i} className="py-2 text-gray-700 font-medium">{d}</li>
+
+              {departamentos.map((d: any) => (
+                <li key={d.id}>
+                  {d.nombre}
+                </li>
               ))}
-              {departamentos.length === 0 && <p className="text-gray-400 text-sm">No hay departamentos asignados.</p>}
+
+              {departamentos.length === 0 && (
+                <p className="text-gray-400 text-sm">
+                  No hay departamentos asignados.
+                </p>
+              )}
+
             </ul>
+
           </div>
+
+          {/* MODAL */}
+          {showDepartamentoModal && (
+            <ModalDepartamento
+              onClose={() => setShowDepartamentoModal(false)}
+              onSave={handleGuardarDepartamento}
+            />
+          )}
+
         </section>
 
         <section className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+
+          {/* HEADER */}
           <div className="bg-indigo-500 text-white px-6 py-4 flex items-center">
             <span className="text-2xl mr-3">💼</span>
-            <h2 className="text-xl font-bold">Puestos Registrados</h2>
+
+            <h2 className="text-xl font-bold">
+              Puestos Registrados
+            </h2>
           </div>
+
+          {/* TEXTO + BOTÓN */}
+          <div className="px-6 pt-4 flex items-center justify-between">
+
+            <p className="text-gray-500 text-sm">
+              Puestos laborales registrados en el sistema.
+            </p>
+
+            <button
+              onClick={() => setShowPuestoModal(true)}
+              className="text-xs bg-indigo-100 hover:bg-indigo-200 px-3 py-1 rounded-full transition font-medium"
+            >
+              + Nuevo Puesto
+            </button>
+
+          </div>
+
+          {/* LISTA */}
           <div className="p-6 bg-white max-h-48 overflow-y-auto">
-             <ul className="divide-y text-sm">
-              {puestos.map((p, i) => (
-                <li key={i} className="py-2 text-gray-700 font-medium">{p}</li>
+
+            <ul className="divide-y text-sm">
+
+              {puestos.map((p: any) => (
+                <li
+                  key={p.id}
+                  className="py-2 text-gray-700 font-medium"
+                >
+                  {p.nombre}
+                </li>
               ))}
-              {puestos.length === 0 && <p className="text-gray-400">No hay puestos asignados.</p>}
+
+              {puestos.length === 0 && (
+                <p className="text-gray-400">
+                  No hay puestos asignados.
+                </p>
+              )}
+
             </ul>
+
           </div>
+
+          {/* MODAL */}
+          {showPuestoModal && (
+            <ModalPuesto
+              onClose={() => setShowPuestoModal(false)}
+              onSave={handleGuardarPuesto}
+            />
+          )}
+
         </section>
       </div>
 

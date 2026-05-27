@@ -1,15 +1,36 @@
 import { useState, useEffect } from 'react';
 
-export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) => {
+export const ModalEditarEmpleado = ({
+    isOpen,
+    onClose,
+    empleado,
+    onSave,
+    puestos = [],
+    departamentos = []
+}: any) => { 
+
     const [formData, setFormData] = useState<any>(null);
 
     useEffect(() => {
+
         if (empleado) {
+
             setFormData({
                 ...empleado,
-                salario_base: Number(empleado.salario_base)
+
+                fecha_nacimiento:
+                    empleado.fecha_nacimiento
+                        ? empleado.fecha_nacimiento.split('T')[0]
+                        : '',
+
+                salario_base: Number(empleado.salario_base),
+
+                puesto_id: empleado.puesto_id || '',
+
+                departamento_id: empleado.departamento_id || ''
             });
         }
+
     }, [empleado]);
 
     if (!isOpen || !formData) return null;
@@ -17,9 +38,12 @@ export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) 
     // Si el empleado tiene un ID, significa que estamos editando. Si no, es nuevo.
     const esEdicion = !!formData?.id;
 
+    console.log('MODAL PUESTOS:', puestos);
+    console.log('MODAL DEPARTAMENTOS:', departamentos);
+
     return (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
 
                 {/* Encabezado Elegante */}
                 <div className="bg-[#a4ab9a] p-6 text-white relative">
@@ -76,7 +100,6 @@ export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) 
 
                             <input
                                 type="text"
-                                required
                                 value={formData.dpi}
                                 onChange={(e) => setFormData({ ...formData, dpi: e.target.value })}
                                 className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 focus:ring-[#a4ab9a] focus:border-transparent outline-none transition-all shadow-sm"
@@ -97,6 +120,56 @@ export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) 
                             />
                         </div>
 
+                        <div>
+                            <label className="block text-[10px] font-black text-[#a4ab9a] uppercase mb-2 tracking-wider">
+                                Fecha de Nacimiento
+                            </label>
+
+                            <input
+                                required
+                                type="date"
+                                max={new Date().toISOString().split('T')[0]}
+                                value={formData.fecha_nacimiento || ''}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        fecha_nacimiento: e.target.value
+                                    })
+                                }
+                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700"
+                            />
+
+                            <p className="text-xs text-gray-400 mt-2">
+                                Seleccione la fecha de nacimiento del empleado.
+                            </p>
+                        </div>
+
+                        {/* DIRECCIÓN */}
+                        <div className="col-span-2">
+                            <label className="block text-[10px] font-black text-[#a4ab9a] uppercase mb-2 tracking-wider">
+                                Dirección
+                            </label>
+
+                            <input
+                                required
+                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 focus:ring-[#a4ab9a] focus:border-transparent outline-none transition-all shadow-sm"
+                                value={formData.direccion || ''}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        direccion: e.target.value
+                                    })
+                                }
+                                placeholder="Ingrese la dirección del empleado"
+                            />
+
+                            <p className="text-xs text-gray-400 mt-2">
+                                Dirección de residencia del empleado.
+                            </p>
+                        </div>
+
+                       
+
                         {/* Sección: Datos Laborales */}
                         <div className="col-span-2 flex items-center gap-2 border-b border-gray-100 pb-2 mt-4 mb-2">
                             <span className="text-[#a4ab9a] font-bold text-sm italic">Información Laboral</span>
@@ -104,21 +177,61 @@ export const ModalEditarEmpleado = ({ isOpen, onClose, empleado, onSave }: any) 
 
                         <div>
                             <label className="block text-[10px] font-black text-[#a4ab9a] uppercase mb-2 tracking-wider">Puesto</label>
-                            <input
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 focus:ring-[#a4ab9a] focus:border-transparent outline-none transition-all shadow-sm"
-                                value={formData.puesto}
-                                onChange={(e) => setFormData({ ...formData, puesto: e.target.value })}
-                            />
+                            <select
+                                value={formData.puesto_id || ''}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        puesto_id: Number(e.target.value)
+                                    })
+                                }
+                                className="w-full border p-2 rounded outline-none focus:border-gray-500"
+                            >
+
+                                <option value="">
+                                    Seleccione un puesto
+                                </option>
+
+                                {puestos?.map((p: any) => (
+                                    <option
+                                        key={p.id}
+                                        value={p.id}
+                                    >
+                                        {p.nombre}
+                                    </option>
+                                ))}
+
+                            </select>
                         </div>
 
                         {/* AQUÍ ESTÁ EL CAMPO QUE FALTABA: Departamento */}
                         <div>
                             <label className="block text-[10px] font-black text-[#a4ab9a] uppercase mb-2 tracking-wider">Departamento</label>
-                            <input
-                                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-700 focus:ring-2 focus:ring-[#a4ab9a] focus:border-transparent outline-none transition-all shadow-sm"
-                                value={formData.departamento}
-                                onChange={(e) => setFormData({ ...formData, departamento: e.target.value })}
-                            />
+                            <select
+                                value={formData.departamento_id || ''}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        departamento_id: Number(e.target.value)
+                                    })
+                                }
+                                className="w-full border p-2 rounded outline-none focus:border-gray-500"
+                            >
+
+                                <option value="">
+                                    Seleccione un departamento
+                                </option>
+
+                                {departamentos?.map((d: any) => (
+                                    <option
+                                        key={d.id}
+                                        value={d.id}
+                                    >
+                                        {d.nombre}
+                                    </option>
+                                ))}
+
+                            </select>
                         </div>
 
                         <div>
