@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { EmpleadosService } from "../../service/empleados.service";
-import {
-  getTiposDocumento,
-  getDocumentosPorEmpleado,
-  subirDocumento,
-} from "../../service/documentos.service";
+import {  getTiposDocumento,  getDocumentosPorEmpleado,  subirDocumento,eliminarDocumento, obtenerDocumento} from "../../service/documentos.service";
 
 /* 🔹 TIPOS */
 interface Empleado {
@@ -39,6 +35,13 @@ export const Documentos: React.FC = () => {
   const [empleadoId, setEmpleadoId] = useState<number | null>(null);
   const [tipoSeleccionado, setTipoSeleccionado] = useState<number | "">("");
   const [archivo, setArchivo] = useState<File | null>(null);
+  const [modalDocs, setModalDocs] = useState(false);
+
+const [docsSeleccionados, setDocsSeleccionados] =
+  useState<any[]>([]);
+
+const [nombreEmpleado, setNombreEmpleado] =
+  useState('');
 
   /* 🔹 FUNCIÓN ANTES DEL useEffect */
   const cargarDatos = async () => {
@@ -52,9 +55,19 @@ export const Documentos: React.FC = () => {
       const docsTemp: DocsPorEmpleado = {};
 
       for (const emp of empleadosData) {
-        const docsRes = await getDocumentosPorEmpleado(emp.id);
-        docsTemp[emp.id] = docsRes.data;
-      }
+
+  const docsRes =
+    await getDocumentosPorEmpleado(emp.id);
+
+  console.log(
+    'DOCS EMPLEADO',
+    emp.id,
+    docsRes.data
+  );
+
+  docsTemp[emp.id] = docsRes.data;
+
+}
 
       setDocsPorEmpleado(docsTemp);
     } catch (error) {
@@ -88,6 +101,51 @@ export const Documentos: React.FC = () => {
     setModal(true);
   };
 
+  const abrirModalDocumentos = (
+  empleado: any
+ ) => {
+
+  const docs =
+    docsPorEmpleado[empleado.id] || [];
+
+  if (docs.length === 0) {
+    alert('No tiene documentos');
+    return;
+  }
+
+  setDocsSeleccionados(docs);
+
+  setNombreEmpleado(
+    `${empleado.nombres} ${empleado.apellidos}`
+  );
+
+
+  setModalDocs(true);
+
+};
+const descargarDocumento = async (
+  id: number
+) => {
+
+  const res =
+    await obtenerDocumento(id);
+
+  const { base64, nombre_archivo } =
+    res.data;
+
+  const link =
+    document.createElement('a');
+
+  link.href =
+    `data:application/pdf;base64,${base64}`;
+
+  link.download =
+    nombre_archivo;
+
+  link.click();
+
+};
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
  
@@ -104,7 +162,7 @@ export const Documentos: React.FC = () => {
       formData.append("file", archivo);
      formData.append(
   "subido_por_usuario_id",
-  empleadoId.toString()
+  "7"
 );
 
       await subirDocumento(formData);
@@ -290,33 +348,33 @@ export const Documentos: React.FC = () => {
 
         {empleados.map((emp) => {
 
-          const docs =
-            docsPorEmpleado[emp.id] || [];
+         const docs =
+  docsPorEmpleado[emp.id] || [];
 
-          const tieneDoc = (
-  nombre: string
+console.log(
+  'DOCUMENTOS',
+  emp.id,
+  docs
+);
+
+const tieneDoc = (
+  tipoId: number
 ) => {
 
-  return docs.some((d: any) => {
-
-    return (
-      d.tipos_documento?.nombre
-        ?.toLowerCase()
-        .trim() ===
-      nombre.toLowerCase().trim()
-    );
-
-  });
+  return docs.some(
+    (d: any) =>
+      Number(d.tipo_documento_id) === Number(tipoId)
+  );
 
 };
            
 const obligatorios = [
-  'DPI',
-  'Penales',
-  'Policíacos',
-  'CV',
-  'Título',
-  'Contrato'
+  1,
+  2,
+  3,
+  4,
+  5,
+  6
 ];
 
 const totalSubidos =
@@ -357,23 +415,21 @@ if (totalSubidos === obligatorios.length) {
 
               {/* DPI */}
               <td className="p-4 text-center">
-
-                <span
-                  className={`inline-block w-4 h-4 rounded-full ${
-                    tieneDoc('DPI')
-                      ? 'bg-green-500'
-                      : 'bg-red-500'
-                  }`}
-                />
-
-              </td>
+  <span
+    className={`inline-block w-4 h-4 rounded-full ${
+      tieneDoc(1)
+        ? 'bg-green-500'
+        : 'bg-red-500'
+    }`}
+  />
+</td>
 
               {/* PENALES */}
               <td className="p-4 text-center">
 
                 <span
                   className={`inline-block w-4 h-4 rounded-full ${
-                    tieneDoc('Penales')
+                    tieneDoc(2)
                       ? 'bg-green-500'
                       : 'bg-red-500'
                   }`}
@@ -386,7 +442,7 @@ if (totalSubidos === obligatorios.length) {
 
                 <span
                   className={`inline-block w-4 h-4 rounded-full ${
-                    tieneDoc('Policíacos')
+                    tieneDoc(3)
                       ? 'bg-green-500'
                       : 'bg-red-500'
                   }`}
@@ -399,7 +455,7 @@ if (totalSubidos === obligatorios.length) {
 
                 <span
                   className={`inline-block w-4 h-4 rounded-full ${
-                    tieneDoc('CV')
+                   tieneDoc(4)
                       ? 'bg-green-500'
                       : 'bg-red-500'
                   }`}
@@ -412,7 +468,7 @@ if (totalSubidos === obligatorios.length) {
 
                 <span
                   className={`inline-block w-4 h-4 rounded-full ${
-                    tieneDoc('Título')
+                    tieneDoc(5)
                       ? 'bg-green-500'
                       : 'bg-red-500'
                   }`}
@@ -425,7 +481,7 @@ if (totalSubidos === obligatorios.length) {
 
                 <span
                   className={`inline-block w-4 h-4 rounded-full ${
-                    tieneDoc('Contrato')
+                    tieneDoc(6)
                       ? 'bg-green-500'
                       : 'bg-red-500'
                   }`}
@@ -470,16 +526,15 @@ if (totalSubidos === obligatorios.length) {
   </button>
 
   <button
-    className="text-blue-500 hover:scale-125 transition text-xl"
-  >
-    📝
-  </button>
+  onClick={() =>
+    abrirModalDocumentos(emp)
+  }
+  className="text-blue-500 hover:scale-125 transition text-xl"
+>
+  📝
+</button>
 
-  <button
-    className="text-red-500 hover:scale-125 transition text-xl"
-  >
-    🗑️
-  </button>
+  
 
 </td>
 
@@ -495,7 +550,88 @@ if (totalSubidos === obligatorios.length) {
   </div>
 
 </div>
+{modalDocs && (
 
+<div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+
+  <div className="bg-white p-6 rounded-lg w-[600px]">
+
+    <h2 className="text-xl font-bold mb-4">
+      Documentos de {nombreEmpleado}
+    </h2>
+
+    <div className="space-y-3">
+
+      {docsSeleccionados.map((doc: any) => (
+
+        <div
+          key={doc.id}
+          className="flex justify-between items-center border p-3 rounded"
+        >
+
+         <span>
+  {doc.tipos_documento?.nombre}
+</span>
+
+<div className="space-x-2">
+
+  <button
+    onClick={() =>
+      descargarDocumento(doc.id)
+    }
+    className="bg-blue-500 text-white px-3 py-1 rounded"
+  >
+    Descargar
+  </button>
+
+  <button
+    onClick={async () => {
+
+      const confirmar =
+        window.confirm(
+          `¿Eliminar ${doc.tipos_documento?.nombre}?`
+        );
+
+      if (!confirmar) return;
+
+      await eliminarDocumento(doc.id);
+
+      await cargarDatos();
+
+      setDocsSeleccionados(
+        docsSeleccionados.filter(
+          (d) => d.id !== doc.id
+        )
+      );
+
+    }}
+    className="bg-red-500 text-white px-3 py-1 rounded"
+  >
+    Eliminar
+  </button>
+
+</div>
+
+        </div>
+
+      ))}
+
+    </div>
+
+    <button
+      onClick={() =>
+        setModalDocs(false)
+      }
+      className="mt-4 w-full bg-gray-500 text-white py-2 rounded"
+    >
+      Cerrar
+    </button>
+
+  </div>
+
+</div>
+
+)}
       {/* 🔹 MODAL */}
       {modal && (
         <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center">

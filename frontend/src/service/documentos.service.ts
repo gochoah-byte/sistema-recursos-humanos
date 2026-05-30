@@ -12,6 +12,12 @@ export const subirDocumento = (formData: FormData) =>
     },
   });
 
+  export const eliminarDocumento = (id: number) =>
+  api.delete(`/documentos/${id}`);
+
+  export const obtenerDocumento = (id: number) =>
+  api.get(`/documentos/${id}/base64`);
+  
 export const DocumentosService = {
   getAll: async () => {
     const response = await api.get('/documentos');

@@ -269,16 +269,7 @@ export const EmpleadosList: React.FC = () => {
 
                       <button title="Editar" onClick={() => { setEmpleadoSeleccionado(emp); setIsModalOpen(true); }} className="text-gray-400 hover:text-[#d7bda8] transition"> ✏️</button>
                       
-                      <button
-                        title="Documentos"
-                        onClick={() => {
-                          setEmpleadoSeleccionado(emp);
-                          setIsDocumentosOpen(true);
-                        }}
-                        className="text-gray-400 hover:text-[#a4ab9a] transition"
-                      >
-                        📄
-                      </button>
+                     
 
                     </div>
                   </div>

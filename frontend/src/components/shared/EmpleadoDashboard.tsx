@@ -197,18 +197,7 @@ export const EmpleadoDashboard: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-gray-200">
           
-          <div className="p-6 bg-gray-50 hover:bg-white transition text-center flex flex-col items-center justify-center h-48">
-            <div className="text-4xl mb-2">📅</div>
-            <h3 className="font-bold text-gray-700">Mi Asistencia</h3>
-            <p className="text-xs text-gray-500 mt-2">Ver marcaciones y horas extra</p>
-          </div>
-
-          <div className="p-6 bg-gray-50 hover:bg-white transition text-center flex flex-col items-center justify-center h-48 relative">
-            <div className="text-4xl mb-2">🌴</div>
-            <h3 className="font-bold text-gray-700">Mis Vacaciones</h3>
-            <p className="text-xs text-gray-500 mt-2">15 Días Disponibles</p>
-            <button onClick={() => { setPermisoForm({...permisoForm, tipo: 'VACACIONES'}); setIsPermisoModalOpen(true); }} className="mt-4 text-xs bg-[#a4ab9a] text-white px-4 py-2 rounded-lg hover:bg-[#8e9485] font-bold">Solicitar</button>
-          </div>
+          
 
           <div className="p-6 bg-gray-50 hover:bg-white transition text-center flex flex-col items-center justify-center h-48 relative">
             <div className="text-4xl mb-2">📝</div>

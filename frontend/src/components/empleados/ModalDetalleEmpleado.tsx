@@ -52,9 +52,7 @@ export const ModalDetalleEmpleado: React.FC<Props> = ({
                                 {empleado.nombres} {empleado.apellidos}
                             </h3>
 
-                            <p className="text-gray-500">
-                                {empleado.puestos?.nombre || 'Sin puesto'}
-                            </p>
+                            
 
                             <span className={`
                 inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold
@@ -138,6 +136,10 @@ export const ModalDetalleEmpleado: React.FC<Props> = ({
 
                             <p className="font-bold text-gray-800">
                                 {empleado.puesto}
+
+                                <p className="text-gray-500">
+                                {empleado.puestos?.nombre || 'Sin puesto'}
+                            </p>
                             </p>
                         </div>
 

@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { EmpleadosService } from '../../service/empleados.service';
 import { DocumentosService } from '../../service/documentos.service';
+import { jsPDF } from "jspdf";
 
 // IMPORTAMOS EL COMPONENTE DE EMPLEADOS QUE YA FUNCIONA
 import { EmpleadosList } from '../empleados/EmpleadosList';
 import { DepartamentosList } from '../departamento/DepartamentoList';
 import { PuestosList } from '../puesto/PuestoList';
-
+import { NominaService } from '../../service/nomina.service';
 
 export const RrhhDashboard: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState('DASHBOARD');
   
   const [metrics, setMetrics] = useState({ activos: 0, documentos: 0 });
   const [loading, setLoading] = useState(true);
-  
+  const [periodos, setPeriodos] = useState<any[]>([]);
+  const [detalleSeleccionado, setDetalleSeleccionado] = useState<any[]>([]);
 
   useEffect(() => {
 
@@ -21,18 +23,22 @@ export const RrhhDashboard: React.FC = () => {
 
       try {
 
-        const [emp, docs] = await Promise.all([
-          EmpleadosService.getAll(),
-          DocumentosService.getAll()
-        ]);
+       const emp = await EmpleadosService.getAll();
+
+const periodosData =
+  await NominaService.getPeriodos();
+         console.log("PERIODOS:", periodosData);
 
         setMetrics({
           activos: emp.filter(
             (e: any) => e.estado === 'ACTIVO'
           ).length,
 
-          documentos: docs.length || 0
+         documentos: 0
         });
+        setPeriodos(periodosData);
+
+        console.log(periodosData);
 
       } catch (error) {
 
@@ -58,8 +64,6 @@ export const RrhhDashboard: React.FC = () => {
     { id: 'EMPLEADOS', label: 'Empleados', icon: '👥' },
     { id: 'DEPARTAMENTOS', label: 'Departamentos', icon: '🏢' },
     { id: 'PUESTOS', label: 'Puestos', icon: '💼' },
-    { id: 'VACACIONES', label: 'Vacaciones', icon: '🌴' },
-    { id: 'PERMISOS', label: 'Permisos', icon: '📝' },
     { id: 'NOMINA', label: 'Nómina', icon: '💰' },
     { id: 'PLANILLA', label: 'Planilla', icon: '📑' },
     { id: 'REPORTES', label: 'Reportes', icon: '📈' },
@@ -160,15 +164,6 @@ export const RrhhDashboard: React.FC = () => {
           <PuestosList />
         )}
 
-
-        {/* VISTA 4: VACACIONES Y PERMISOS */}
-        {(activeMenu === 'VACACIONES' || activeMenu === 'PERMISOS') && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center">
-            <h2 className="text-2xl font-bold text-teal-600 mb-4">Gestión de Ausencias</h2>
-            <p className="text-gray-500">Bandeja de entrada para aprobar o rechazar solicitudes de {activeMenu.toLowerCase()} enviadas por los empleados.</p>
-          </div>
-        )}
-
         {/* VISTA 5: NÓMINA (Sueldos, Bonos, Descuentos) */}
         {activeMenu === 'NOMINA' && (
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center">
@@ -178,12 +173,317 @@ export const RrhhDashboard: React.FC = () => {
         )}
 
         {/* VISTA 6: PLANILLA Y BOLETAS */}
-        {activeMenu === 'PLANILLA' && (
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-10 text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">Generación de Planilla</h2>
-            <p className="text-gray-500">Genera la planilla quincenal o mensual y emite automáticamente las boletas de pago (PDF) para cada empleado.</p>
-          </div>
-        )}
+{activeMenu === 'PLANILLA' && (
+  <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+
+    <h2 className="text-2xl font-bold mb-6">
+      Historial de Planillas
+    </h2>
+
+    <p className="mb-4">
+  Total períodos: {periodos.length}
+</p>
+
+    <table className="w-full">
+      <thead>
+        <tr className="border-b">
+          <th>ID</th>
+          <th>Inicio</th>
+          <th>Fin</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {periodos.map((p: any) => (
+          <tr key={p.id} className="border-b">
+
+            <td>{p.id}</td>
+
+            <td>
+              {new Date(p.fecha_inicio).toLocaleDateString()}
+            </td>
+
+            <td>
+              {new Date(p.fecha_fin).toLocaleDateString()}
+            </td>
+
+            <td>
+              {p.estado}
+            </td>
+
+            
+  <td>
+  <button
+    className="text-blue-600 font-bold hover:underline"
+    onClick={async () => {
+
+      const detalles =
+        await NominaService.getDetalles();
+
+      const filtrados =
+        detalles.filter(
+          (d: any) =>
+            d.periodo_nomina_id === p.id
+        );
+
+      setDetalleSeleccionado(
+        filtrados
+      );
+
+    }}
+  >
+    Ver Detalles
+  </button>
+
+  <button
+    className="text-green-600 font-bold hover:underline ml-3"
+    onClick={async () => {
+
+  const detalles =
+    await NominaService.getDetalles();
+
+  const filtrados =
+    detalles.filter(
+      (d: any) =>
+        d.periodo_nomina_id === p.id
+    );
+
+  const doc = new jsPDF();
+
+  doc.setFontSize(16);
+  doc.text(
+    "REPORTE GENERAL DE PLANILLA",
+    20,
+    20
+  );
+
+  doc.setFontSize(12);
+
+  doc.text(
+    `Planilla #${p.id}`,
+    20,
+    35
+  );
+
+  doc.text(
+    `Estado: ${p.estado}`,
+    20,
+    45
+  );
+
+  let y = 65;
+
+  doc.text(
+    "Empleado",
+    20,
+    y
+  );
+
+  doc.text(
+    "Salario Neto",
+    140,
+    y
+  );
+
+  y += 10;
+
+  filtrados.forEach((d: any) => {
+
+    doc.text(
+      `${d.empleados?.nombres} ${d.empleados?.apellidos}`,
+      20,
+      y
+    );
+
+    doc.text(
+      `Q${d.salario_neto}`,
+      140,
+      y
+    );
+
+    y += 10;
+
+  });
+
+  y += 10;
+
+  doc.text(
+    `Total Empleados: ${filtrados.length}`,
+    20,
+    y
+  );
+
+  y += 10;
+
+  const totalNomina =
+    filtrados.reduce(
+      (sum: number, d: any) =>
+        sum + Number(d.salario_neto),
+      0
+    );
+
+  doc.text(
+    `Total Nomina: Q${totalNomina.toFixed(2)}`,
+    20,
+    y
+  );
+
+  doc.save(
+    `reporte-planilla-${p.id}.pdf`
+  );
+
+}}
+  >
+    Reporte
+  </button>
+
+
+
+</td>
+
+
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    {detalleSeleccionado.length > 0 && (
+  <div className="mt-6 border-t pt-4">
+
+    <h3 className="text-xl font-bold mb-4">
+      Detalles de la Planilla
+    </h3>
+
+    <div className="max-h-96 overflow-y-auto">
+
+      <table className="w-full">
+
+        <thead>
+          <tr className="border-b">
+            <th>Empleado</th>
+            <th>Salario Base</th>
+            <th>Deducciones</th>
+            <th>Salario Neto</th>
+            <th>Voucher PDF</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {detalleSeleccionado.map((d: any) => (
+            <tr key={d.id} className="border-b">
+
+              <td>
+                {d.empleados?.nombres} {d.empleados?.apellidos}
+              </td>
+
+              <td>
+                Q{d.salario_base_snapshot}
+              </td>
+
+              <td>
+                Q{d.deducciones_total}
+              </td>
+
+              <td>
+                Q{d.salario_neto}
+              </td>
+
+              <td>
+  <button
+    className="text-red-600 font-bold hover:underline"
+    onClick={() => {
+
+     const doc = new jsPDF();
+
+doc.setFontSize(18);
+doc.text("SISTEMA DE RECURSOS HUMANOS", 20, 20);
+
+doc.setFontSize(16);
+doc.text("VOUCHER DE PAGO", 20, 35);
+
+doc.line(20, 40, 190, 40);
+
+doc.setFontSize(12);
+
+doc.text(
+  `Empleado: ${d.empleados?.nombres} ${d.empleados?.apellidos}`,
+  20,
+  55
+);
+
+doc.text(
+  `Puesto: ${d.empleados?.puesto}`,
+  20,
+  65
+);
+
+doc.text(
+  `Departamento: ${d.empleados?.departamento}`,
+  20,
+  75
+);
+
+doc.line(20, 85, 190, 85);
+
+doc.text("INGRESOS", 20, 100);
+
+doc.text(
+  `Salario Base: Q${d.salario_base_snapshot}`,
+  30,
+  110
+);
+
+doc.line(20, 120, 190, 120);
+
+doc.text("DEDUCCIONES", 20, 135);
+
+doc.text(
+  `IGSS: Q${d.deducciones_total}`,
+  30,
+  145
+);
+
+doc.line(20, 155, 190, 155);
+
+doc.setFontSize(14);
+
+doc.text(
+  `SALARIO NETO: Q${d.salario_neto}`,
+  20,
+  170
+);
+
+doc.line(20, 210, 80, 210);
+doc.text("Firma Empleado", 20, 220);
+
+doc.line(120, 210, 180, 210);
+doc.text("Recursos Humanos", 120, 220);
+
+doc.save(
+  `voucher-${d.empleados?.nombres}.pdf`
+);
+
+    }}
+  >
+    Voucher
+  </button>
+</td>
+
+            </tr>
+          ))}
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+)}
+
+
+  </div>
+)}
 
         {/* VISTA 7: DOCUMENTOS */}
         {activeMenu === 'DOCUMENTOS' && (

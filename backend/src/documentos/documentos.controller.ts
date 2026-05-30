@@ -70,12 +70,17 @@ if (file.size > maxSize) {
 }
     // Convertimos a número porque en multipart/form-data llegan como strings
     const metadata = {
-      nombre_archivo: file.originalname,
-      url_archivo: file.buffer.toString('base64'),
-      empleado_id: Number(body.empleado_id),
-      tipo_documento_id: Number(body.tipo_documento_id),
-      subido_por_usuario_id: Number(body.subido_por_usuario_id)
-    };
+  nombre_archivo: file.originalname,
+  url_archivo: file.buffer.toString('base64'),
+  empleado_id: Number(body.empleado_id),
+  tipo_documento_id: Number(body.tipo_documento_id),
+  subido_por_usuario_id: Number(body.subido_por_usuario_id)
+};
+
+console.log('BODY:', body);
+console.log('METADATA:', metadata);
+
+return this.documentosService.saveMetadata(metadata);
 
     return this.documentosService.saveMetadata(metadata);
   }

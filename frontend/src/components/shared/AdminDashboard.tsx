@@ -18,6 +18,7 @@ import { DepartamentosService } from '../../service/departamentos.service';
 const ModuloNomina: React.FC = () => {
   const [periodos, setPeriodos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [detalleSeleccionado, setDetalleSeleccionado] = useState<any[]>([]);
 
   
 
@@ -34,6 +35,33 @@ const ModuloNomina: React.FC = () => {
     };
     fetchPeriodos();
   }, []);
+
+  const handleVerDetalles = async (periodoId: number) => {
+  try {
+
+    const detalles =
+  await NominaService.getDetalles();
+
+console.log('TODOS LOS DETALLES:', detalles);
+
+const filtrados =
+  detalles.filter(
+    (d: any) =>
+      Number(d.periodo_nomina_id) === Number(periodoId)
+  );
+
+console.log('PERIODO SELECCIONADO:', periodoId);
+console.log('FILTRADOS:', filtrados);
+
+setDetalleSeleccionado(filtrados);
+  } catch (error) {
+
+    console.error(error);
+
+    alert('Error cargando detalles');
+
+  }
+};
 
   const handleCrearPeriodo = async () => {
     const fechaInicio = prompt("Ingrese la fecha de inicio (YYYY-MM-DD):");
@@ -57,7 +85,7 @@ const ModuloNomina: React.FC = () => {
           + Abrir Nuevo Período
         </button>
       </div>
-      {loading ? <p>Cargando nóminas...</p> : (
+      {loading ? <p>Cargando nóminas...</p> : (<>
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-100 text-gray-600">
@@ -80,13 +108,104 @@ const ModuloNomina: React.FC = () => {
                   </span>
                 </td>
                 <td className="p-3 space-x-2">
-                  <button className="text-blue-500 hover:underline text-sm font-bold">Ver Detalles</button>
-                  {p.estado === 'ABIERTO' && <button className="text-orange-500 hover:underline text-sm font-bold">Cerrar Planilla</button>}
+                 
+                  <button   onClick={() => handleVerDetalles(p.id)}   className="text-blue-500 hover:underline text-sm font-bold">Ver Detalles</button>
+                  {p.estado === 'ABIERTO' && (
+  <button
+  onClick={async () => {
+
+    const confirmar =
+      window.confirm(
+        '¿Está seguro de cerrar esta planilla?'
+      );
+
+    if (!confirmar) return;
+
+    await NominaService.cerrarPeriodo(p.id);
+
+    const data =
+      await NominaService.getPeriodos();
+
+    setPeriodos(data);
+
+  }}
+  className="text-orange-500 hover:underline text-sm font-bold"
+>
+  Cerrar Planilla
+</button>
+)}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+
+{detalleSeleccionado.length > 0 && (
+  <div className="mt-6 bg-white p-4 border rounded">
+
+    <h2 className="text-xl font-bold mb-4">
+  Detalles de la Planilla ({detalleSeleccionado.length} empleados)
+</h2>
+<button
+  onClick={() => setDetalleSeleccionado([])}
+  className="mb-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+>
+  Ocultar Detalles
+</button>
+<div className="max-h-96 overflow-y-auto">
+
+
+    <table className="w-full">
+      <thead>
+        <tr>
+          <th>Empleado</th>
+          <th>Salario Base</th>
+          <th>Deducciones</th>
+          <th>Salario Neto</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {detalleSeleccionado.map((d: any) => (
+          <tr key={d.id}>
+            <td>
+              {d.empleados?.nombres} {d.empleados?.apellidos}
+            </td>
+
+            <td>
+              Q{d.salario_base_snapshot}
+            </td>
+
+            <td>
+              Q{d.deducciones_total}
+            </td>
+
+            <td>
+              Q{d.salario_neto}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+
+    </table>
+    <div className="mt-4 font-bold">
+  Total Empleados: {detalleSeleccionado.length}
+</div>
+
+<div className="font-bold text-green-600">
+  Total Nómina: Q{
+    detalleSeleccionado.reduce(
+      (sum: number, d: any) =>
+        sum + Number(d.salario_neto),
+      0
+    ).toFixed(2)
+  }
+</div>
+</div>
+  </div>
+)}
+
+        </>
       )}
     </div>
   );

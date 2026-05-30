@@ -17,25 +17,40 @@ export class DocumentosService {
     subido_por_usuario_id: number;
   }) {
     // 1. Creamos el registro del documento
-    const nuevoDoc = await this.prisma.documentos.create({
-      data: {
-        nombre_archivo: data.nombre_archivo,
-        url_archivo: data.url_archivo,
-        empleado_id: data.empleado_id,
-        tipo_documento_id: data.tipo_documento_id,
-        subido_por_usuario_id: data.subido_por_usuario_id,
-        subido_en: new Date(), // Aseguramos la fecha
-      },
-    });
+   const existeDocumento =
+  await this.prisma.documentos.findFirst({
+    where: {
+      empleado_id: data.empleado_id,
+      tipo_documento_id: data.tipo_documento_id
+    }
+  });
 
-    // 2. Registramos la auditoría (Esto es lo que faltaba)
+if (existeDocumento) {
+  throw new Error(
+    'Este tipo de documento ya existe para este empleado'
+  );
+}
+
+const nuevoDoc =
+  await this.prisma.documentos.create({
+    data: {
+      nombre_archivo: data.nombre_archivo,
+      url_archivo: data.url_archivo,
+      empleado_id: data.empleado_id,
+      tipo_documento_id: data.tipo_documento_id,
+      subido_por_usuario_id: data.subido_por_usuario_id,
+      subido_en: new Date(),
+    },
+  });
+
+     //2. Registramos la auditoría (Esto es lo que faltaba)
     await this.auditoriaService.create({
-      usuario_id: data.subido_por_usuario_id,
-      accion: 'SUBIR_DOCUMENTO',
-      entidad: 'documentos',
-      entidad_id: nuevoDoc.id,
-      descripcion: `Se cargó el documento ${data.nombre_archivo} para el empleado ID ${data.empleado_id}`,
-    });
+  usuario_id: data.subido_por_usuario_id,
+   accion: 'SUBIR_DOCUMENTO',
+   entidad: 'documentos',
+   entidad_id: nuevoDoc.id,
+   descripcion: `Se cargó el documento ${data.nombre_archivo} para el empleado ID ${data.empleado_id}`,
+ });
 
     return nuevoDoc;
   }
@@ -53,18 +68,32 @@ export class DocumentosService {
     return docs;
   }
   async remove(id: number) {
-    const documento = await this.prisma.documentos.findUnique({ where: { id } });
 
-    if (!documento) {
-      throw new NotFoundException(`El documento con ID ${id} no existe`);
-    }
-
-   
-
-    return this.prisma.documentos.delete({
-      where: { id },
+  const documento =
+    await this.prisma.documentos.findUnique({
+      where: { id }
     });
+
+  if (!documento) {
+    throw new NotFoundException(
+      `El documento con ID ${id} no existe`
+    );
   }
+
+  await this.auditoriaService.create({
+  usuario_id: Number(
+    documento.subido_por_usuario_id
+  ),
+  accion: 'ELIMINAR_DOCUMENTO',
+  entidad: 'documentos',
+  entidad_id: documento.id,
+  descripcion: `Se eliminó el documento ${documento.nombre_archivo}`
+});
+
+  return await this.prisma.documentos.delete({
+    where: { id }
+  });
+}
 
   async validarExpediente(empleadoId: number) {
     const tiposObligatorios = await this.prisma.tipos_documento.findMany({

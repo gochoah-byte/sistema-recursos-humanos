@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, ParseIntPipe } from '@nestjs/common';
+import {  Controller,  Get,  Post,  Patch,  Body,  Param,  ParseIntPipe} from '@nestjs/common';
 import { PeriodosNominaService } from './periodos_nomina.service';
 import { CreatePeriodosNominaDto } from './dto/create-periodos_nomina.dto'; 
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
@@ -25,4 +25,12 @@ export class PeriodosNominaController {
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.service.findOne(id);
   }
+
+  @Patch(':id/cerrar')
+@ApiOperation({ summary: 'Cerrar planilla' })
+cerrarPeriodo(
+  @Param('id', ParseIntPipe) id: number,
+) {
+  return this.service.cerrarPeriodo(id);
+}
 }
