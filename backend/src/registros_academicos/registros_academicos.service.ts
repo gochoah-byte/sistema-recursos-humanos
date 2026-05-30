@@ -1,17 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateRegistrosAcademicoDto } from './dto/create-registros_academico.dto';
 import { UpdateRegistrosAcademicoDto } from './dto/update-registros_academico.dto';
 
 @Injectable()
 export class RegistrosAcademicosService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(data: CreateRegistrosAcademicoDto) {
     const nuevo = await this.prisma.registros_academicos.create({
       data: {
         empleado_id: data.empleado_id,
-         tipo: data.tipo,
+        tipo: data.tipo,
         titulo: data.titulo,
         institucion: data.institucion,
         fecha_graduacion: new Date(data.fecha_graduacion),
@@ -25,7 +25,11 @@ export class RegistrosAcademicosService {
   }
 
   async findAll() {
-    return await this.prisma.registros_academicos.findMany();
+    return await this.prisma.registros_academicos.findMany({
+      include: {
+        empleados: true, 
+      },
+    });
   }
 
   async findOne(id: number) {
@@ -34,10 +38,16 @@ export class RegistrosAcademicosService {
     });
 
     if (!registro) {
-      return { message: 'Registro no encontrado' };
+      throw new NotFoundException('Registro académico no encontrado');
     }
 
     return registro;
+  }
+
+  async findByEmpleado(empleadoId: number) {
+    return await this.prisma.registros_academicos.findMany({
+      where: { empleado_id: empleadoId },
+    });
   }
 
   async update(id: number, data: UpdateRegistrosAcademicoDto) {
@@ -46,18 +56,20 @@ export class RegistrosAcademicosService {
     });
 
     if (!existe) {
-      return { message: 'Registro no encontrado' };
+      throw new NotFoundException('Registro no encontrado para actualizar');
     }
 
     return await this.prisma.registros_academicos.update({
-  where: { id },
-  data: {
-    ...data,
-    fecha_graduacion: data.fecha_graduacion
-      ? new Date(data.fecha_graduacion)
-      : undefined,
-  },
-});
+      where: { id },
+      data: {
+        tipo: data.tipo,
+        titulo: data.titulo,
+        institucion: data.institucion,
+        fecha_graduacion: data.fecha_graduacion
+          ? new Date(data.fecha_graduacion)
+          : undefined,
+      },
+    });
   }
 
   async remove(id: number) {
@@ -66,7 +78,7 @@ export class RegistrosAcademicosService {
     });
 
     if (!existe) {
-      return { message: 'Registro no encontrado' };
+      throw new NotFoundException('Registro no encontrado para eliminar');
     }
 
     await this.prisma.registros_academicos.delete({

@@ -1,17 +1,27 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, NotFoundException} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateUsuarioDto } from './dto/create-usuario.dto';
+import { JwtService } from '@nestjs/jwt'; 
+import * as bcrypt from 'bcrypt'; 
+import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class UsuariosService {
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService
+  ) { }
 
   async create(createUsuarioDto: CreateUsuarioDto) {
     try {
+      const salt = await bcrypt.genSalt(10);
+      const contrasenaHasheada = await bcrypt.hash(createUsuarioDto.contrasena, salt);
+
       const nuevoUsuario = await this.prisma.usuarios.create({
         data: {
           correo: createUsuarioDto.correo,
-          contrasena: createUsuarioDto.contrasena, 
+          contrasena: contrasenaHasheada, 
           rol: createUsuarioDto.rol.toUpperCase(),
           empleado_id: createUsuarioDto.empleado_id,
         },
@@ -34,7 +44,21 @@ export class UsuariosService {
   }
 
   async findAll() {
-    const lista = await this.prisma.usuarios.findMany();
+    const lista = await this.prisma.usuarios.findMany({
+      select: {
+        id: true,
+        correo: true,
+        rol: true,
+        empleado_id: true,
+
+        empleados: {
+          select: {
+            nombres: true,
+            apellidos: true
+          }
+        }
+      }
+    });
 
     if (lista.length === 0) {
       return {
@@ -46,41 +70,114 @@ export class UsuariosService {
     return lista;
   }
 
+  
   async login(correo: string, contrasena: string) {
     const user = await this.prisma.usuarios.findFirst({
-      where: {
-        correo: correo,
-        contrasena: contrasena, 
-      },
+      where: { correo: correo },
       include: {
         empleados: {
-          select: { nombres: true, apellidos: true } 
+          select: { nombres: true, apellidos: true }
         }
       }
     });
-    return user;
+
+    if (!user) {
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+
+    const esValida = await bcrypt.compare(contrasena, user.contrasena);
+    if (!esValida) {
+      throw new UnauthorizedException('Credenciales incorrectas');
+    }
+
+    const payload = {
+      id: user.id,
+      email: user.correo,
+      rol: user.rol
+    };
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      usuario: {
+        correo: user.correo,
+        rol: user.rol,
+        empleado_id: user.empleado_id, // ESTA ES LA LÍNEA QUE ARREGLA EL DASHBOARD DEL EMPLEADO
+        nombreCompleto: `${user.empleados?.nombres} ${user.empleados?.apellidos}`
+      }
+    };
   }
 
   async findOne(id: number) {
-    return this.prisma.usuarios.findUnique({
-      where: { id },
-      include: { empleados: true }
+    const usuarioId = Number(id);
+
+    if (isNaN(usuarioId) || usuarioId === 0) return null;
+
+    const usuario = await this.prisma.usuarios.findUnique({
+      where: { id: usuarioId },
+
+      select: {
+        id: true,
+        correo: true,
+        rol: true,
+        empleado_id: true,
+
+        empleados: {
+          select: {
+            nombres: true,
+            apellidos: true
+          }
+        }
+      }
     });
+
+    if (!usuario) {
+      throw new NotFoundException(
+        `El usuario con ID ${id} no existe en la base de datos`
+      );
+    }
+
+    return usuario;
   }
 
-  async update(id: number, updateUsuarioDto: any) {
-    return this.prisma.usuarios.update({
-      where: { id },
-      data: updateUsuarioDto,
-    });
+  async update(id: number, updateUsuarioDto: UpdateUsuarioDto) {  
+    const usuarioId = Number(id);
+    const usuarioExistente = await this.prisma.usuarios.findUnique({ where: { id: usuarioId } });
+    
+    if (!usuarioExistente) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+
+    if (updateUsuarioDto.contrasena) {
+      updateUsuarioDto.contrasena = await bcrypt.hash(updateUsuarioDto.contrasena, 10);
+    }
+
+    try {
+      return await this.prisma.usuarios.update({
+        where: { id: usuarioId },
+        data: updateUsuarioDto,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('Este empleado ya tiene un usuario asignado o el correo está en uso.');
+        }
+      }
+      throw error;
+    }
   }
 
   async remove(id: number) {
+    const usuarioId = Number(id);
+    const usuario = await this.prisma.usuarios.findUnique({
+      where: { id: usuarioId },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException(`No se puede eliminar: El usuario con ID ${id} no existe.`);
+    }
+    
     return this.prisma.usuarios.delete({
-      where: { id },
+      where: { id: usuarioId },
     });
   }
-
-  
-
 }

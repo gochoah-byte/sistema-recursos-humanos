@@ -1,69 +1,75 @@
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useState } from 'react';
-import axios from 'axios';
-
-const AdminDashboard = () => <div style={{ color: 'red' }}><h1>Panel de Administrador</h1><p>Conectado a la BD</p></div>;
-const RRHHDashboard = () => <div style={{ color: 'green' }}><h1>Panel de RRHH</h1><p>Conectado a la BD</p></div>;
-const EmpleadoDashboard = () => <div style={{ color: 'blue' }}><h1>Panel de Empleado</h1><p>Conectado a la BD</p></div>;
-
-const Login = ({ setRole }: { setRole: (role: string) => void }) => {
-  const [correo, setCorreo] = useState('');
-  const [contrasena, setContrasena] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      const response = await axios.post('http://localhost:3000/usuarios/login', {
-        correo,
-        contrasena
-      });
-
-      if (response.data && response.data.rol) {
-        const userRole = response.data.rol;
-
-        localStorage.setItem('rol', userRole);
-        setRole(userRole);
-
-        if (userRole === 'ADMIN') navigate('/admin');
-        else if (userRole === 'RRHH') navigate('/rrhh');
-        else navigate('/empleado');
-      }
-    } catch (err: any) {
-      setError('Credenciales incorrectas o servidor apagado');
-      console.error(err);
-    }
-  };
-
-  return (
-    <div style={{ padding: '20px', border: '1px solid #ccc', margin: '50px auto', maxWidth: '300px' }}>
-      <h2>Login Real (DB)</h2>
-      <form onSubmit={handleLogin}>
-        <input type="email" placeholder="Correo" onChange={e => setCorreo(e.target.value)} style={{ width: '90%', marginBottom: '10px' }} required />
-        <input type="password" placeholder="Contraseña" onChange={e => setContrasena(e.target.value)} style={{ width: '90%', marginBottom: '10px' }} required />
-        <button type="submit" style={{ width: '100%' }}>Entrar</button>
-      </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-    </div>
-  );
-};
+import { Login } from './components/auth/Login';
+import { Dashboard } from './components/shared/Dashboard';
+import { MainLayout } from './components/layout/MainLayout';
+import { Documentos } from './components/documentos/Documentos';
+import { EmpleadosList } from './components/empleados/EmpleadosList';
+// Importa tus otros componentes aquí... (Perfil, Nomina, etc.)
 
 function App() {
   const [role, setRole] = useState<string | null>(localStorage.getItem('rol'));
 
+  // Verificar si hay una sesión activa sin importar el rol
+  const isAuthenticated = !!role;
+
   return (
     <BrowserRouter>
       <Routes>
+        {/* LOGIN */}
         <Route path="/" element={<Login setRole={setRole} />} />
 
-        <Route path="/admin" element={role === 'ADMIN' ? <AdminDashboard /> : <Navigate to="/" />} />
-        <Route path="/rrhh" element={role === 'RRHH' ? <RRHHDashboard /> : <Navigate to="/" />} />
-        <Route path="/empleado" element={role === 'EMPLEADO' ? <EmpleadoDashboard /> : <Navigate to="/" />} />
+        {/* RUTAS PRIVADAS (Para cualquier usuario logueado) */}
+        <Route element={isAuthenticated ? <MainLayout /> : <Navigate to="/" />}>
+          
+          {/* Dashboard General (El componente Dashboard manejará qué mostrar según el rol) */}
+          <Route path="/dashboard" element={<Dashboard />} />
 
-        <Route path="*" element={<Navigate to="/" />} />
+          {/* === RUTAS ADMINISTRADOR === */}
+          {role === 'ADMIN' && (
+            <>
+              <Route path="/usuarios" element={<div>Gestión de Usuarios</div>} />
+              <Route path="/departamentos" element={<div>Departamentos</div>} />
+              <Route path="/puestos" element={<div>Puestos</div>} />
+              <Route path="/auditoria" element={<div>Auditoría</div>} />
+              <Route path="/configuracion" element={<div>Configuración</div>} />
+            </>
+          )}
+
+          {/* === RUTAS COMPARTIDAS (ADMIN y RRHH) === */}
+          {(role === 'ADMIN' || role === 'RRHH') && (
+            <>
+              <Route path="/empleados" element={<EmpleadosList />} />
+              <Route path="/documentos" element={<Documentos />} />
+              <Route path="/nomina" element={<div>Nómina</div>} />
+              <Route path="/reportes" element={<div>Reportes</div>} />
+            </>
+          )}
+
+          {/* === RUTAS RRHH === */}
+          {role === 'RRHH' && (
+            <>
+              <Route path="/asistencia" element={<div>Control de Asistencia</div>} />
+              <Route path="/contratos" element={<div>Contratos</div>} />
+            </>
+          )}
+
+          {/* === RUTAS EMPLEADO === */}
+          {role === 'EMPLEADO' && (
+            <>
+              <Route path="/mi-perfil" element={<div>Mi Perfil</div>} />
+              <Route path="/mis-pagos" element={<div>Mis Pagos</div>} />
+              <Route path="/mis-vacaciones" element={<div>Mis Vacaciones</div>} />
+            </>
+          )}
+
+          {/* Redirección por defecto al dashboard si entran a una ruta permitida pero base */}
+          <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
+        </Route>
+
+        {/* CATCH ALL: Si la ruta no existe o no tiene permisos, va al login/dashboard */}
+        <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} />} />
+
       </Routes>
     </BrowserRouter>
   );

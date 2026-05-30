@@ -1,4 +1,9 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export class CreateTiposDocumentoDto {
-  nombre!: string;
-  es_obligatorio!: boolean;
+    @ApiProperty({ example: 'DPI' })
+    nombre!: string;
+
+    @ApiProperty({ example: true })
+    es_obligatorio!: boolean;
 }

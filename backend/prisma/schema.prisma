@@ -75,8 +75,12 @@ model empleados {
   departamento         String?                @db.VarChar(100)
   estado               String                 @db.VarChar(20)
   creado_en            DateTime               @default(now()) @db.Timestamp(6)
+  puesto_id            Int?
+  departamento_id      Int?
   detalles_nomina      detalles_nomina[]
   documentos           documentos[]
+  departamentos        departamentos?         @relation(fields: [departamento_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_empleado_departamento")
+  puestos              puestos?               @relation(fields: [puesto_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_empleado_puesto")
   registros_academicos registros_academicos[]
   usuarios             usuarios?
 }
@@ -121,4 +125,18 @@ model usuarios {
   auditoria_logs auditoria_logs[]
   documentos     documentos[]
   empleados      empleados?       @relation(fields: [empleado_id], references: [id], onUpdate: NoAction, map: "fk_usuario_empleado")
+}
+
+model departamentos {
+  id        Int         @id @default(autoincrement())
+  nombre    String      @unique @db.VarChar(100)
+  creado_en DateTime?   @default(now()) @db.Timestamp(6)
+  empleados empleados[]
+}
+
+model puestos {
+  id        Int         @id @default(autoincrement())
+  nombre    String      @unique @db.VarChar(100)
+  creado_en DateTime?   @default(now()) @db.Timestamp(6)
+  empleados empleados[]
 }
